@@ -324,3 +324,41 @@ alter table public.tasks add column if not exists assignee text;
 
 -- 등록일(registered_date) — 캘린더에서 일정 추가 시 선택한 날짜 저장
 alter table public.tasks add column if not exists registered_date date;
+
+-- ============================================
+-- 6. 팀 계정 모음 테이블
+-- ============================================
+
+create table public.team_accounts (
+  id uuid default gen_random_uuid() primary key,
+  service_name text not null,
+  account_id text not null,
+  account_password text not null,
+  url text,
+  memo text,
+  created_at timestamp with time zone default timezone('utc'::text, now()) not null,
+  updated_at timestamp with time zone default timezone('utc'::text, now()) not null
+);
+
+alter table public.team_accounts enable row level security;
+
+create policy "인증된 사용자는 팀 계정 조회 가능"
+  on public.team_accounts for select
+  to authenticated using (true);
+
+create policy "인증된 사용자는 팀 계정 추가 가능"
+  on public.team_accounts for insert
+  to authenticated with check (true);
+
+create policy "인증된 사용자는 팀 계정 수정 가능"
+  on public.team_accounts for update
+  to authenticated using (true);
+
+create policy "인증된 사용자는 팀 계정 삭제 가능"
+  on public.team_accounts for delete
+  to authenticated using (true);
+
+create trigger set_updated_at_team_accounts
+  before update on public.team_accounts
+  for each row
+  execute procedure public.handle_updated_at();
