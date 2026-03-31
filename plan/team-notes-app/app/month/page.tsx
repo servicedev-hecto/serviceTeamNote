@@ -643,8 +643,8 @@ export default function MonthPage() {
         onSubmit={handleModalSubmit}
       />
 
-      <div className="flex h-[calc(100vh-73px)]">
-        <div className="w-1/2 border-r border-gray-200 p-8 overflow-y-auto">
+      <div className="flex flex-col md:flex-row md:h-[calc(100vh-73px)]">
+        <div className="w-full md:w-1/2 border-b md:border-b-0 md:border-r border-gray-200 p-4 md:p-8 overflow-y-auto">
           <div className="flex rounded-lg border border-gray-200 p-0.5 bg-[#f9f9f9] w-fit gap-0.5 mb-6">
             <button
               type="button"
@@ -681,12 +681,12 @@ export default function MonthPage() {
               <div className="mb-8">
                 <div className="flex items-start justify-between">
                   <div>
-                    <div className="text-6xl font-black text-gray-900 mb-6">
+                    <div className="text-4xl md:text-6xl font-black text-gray-900 mb-4 md:mb-6">
                       {String(currentMonth.getMonth() + 1).padStart(2, '0')}
                     </div>
                     <div className="items-center gap-4">
-                      <div className="text-4xl font-black text-gray-900">{monthNames[currentMonth.getMonth()]}</div>
-                      <div className="text-3xl font-bold mt-2 text-[#aaaaaa]">{currentMonth.getFullYear()}</div>
+                      <div className="text-2xl md:text-4xl font-black text-gray-900">{monthNames[currentMonth.getMonth()]}</div>
+                      <div className="text-xl md:text-3xl font-bold mt-2 text-[#aaaaaa]">{currentMonth.getFullYear()}</div>
                     </div>
                   </div>
 
@@ -899,7 +899,7 @@ export default function MonthPage() {
                         onClick={() => setSelectedDate(new Date(d))}
                         title={holidayName || (taskCount ? `${taskCount}건` : undefined)}
                         className={`
-                          min-h-[220px] rounded-lg p-2 text-left flex flex-col transition-all border-2
+                          min-h-[100px] md:min-h-[220px] rounded-lg p-1.5 md:p-2 text-left flex flex-col transition-all border-2
                           ${
                             isSel
                               ? 'bg-[#FF6114] text-white border-[#FF6114] shadow-md'
@@ -975,17 +975,17 @@ export default function MonthPage() {
           )}
         </div>
 
-        <div className="w-1/2 flex flex-col">
-          <div className="border-b border-gray-200 px-8 py-6">
+        <div className="w-full md:w-1/2 flex flex-col">
+          <div className="border-b border-gray-200 px-4 py-4 md:px-8 md:py-6">
             <div className="flex items-center justify-between gap-4">
               <div className="flex items-center gap-4 justify-between w-full">
                 <div className="flex items-center gap-2">
-                  <span className="text-5xl font-bold text-gray-900">
+                  <span className="text-3xl md:text-5xl font-bold text-gray-900">
                     {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][selectedDate.getDay()]}
                   </span>
-                  <span className="text-red-500 text-2xl">•</span>
+                  <span className="text-red-500 text-xl md:text-2xl">•</span>
                 </div>
-                <span className="text-5xl font-black text-gray-900">{selectedDate.getDate()}</span>
+                <span className="text-3xl md:text-5xl font-black text-gray-900">{selectedDate.getDate()}</span>
               </div>
               <button
                 type="button"
@@ -997,7 +997,7 @@ export default function MonthPage() {
             </div>
           </div>
 
-          <div className="flex-1 overflow-y-auto px-8 py-6">
+          <div className="flex-1 overflow-y-auto px-4 py-4 md:px-8 md:py-6">
             {taskLoadError && (
               <div className="mb-4 px-4 py-3 rounded-md text-sm bg-red-50 text-red-700 border border-red-200">
                 {taskLoadError}

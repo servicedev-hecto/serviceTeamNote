@@ -30,7 +30,7 @@ export default function Header({ profile, email, onLogout, onProfileEdit, onAcco
 
   return (
     <header className="border-b border-gray-200 bg-white">
-      <div className="px-6 py-4 flex items-center justify-between">
+      <div className="px-3 py-3 md:px-6 md:py-4 flex items-center justify-between">
         {/* 로고 */}
         <div className="flex items-center gap-2">
           <Image
@@ -39,7 +39,7 @@ export default function Header({ profile, email, onLogout, onProfileEdit, onAcco
             width={250}
             height={70}
             priority
-            className="h-10 w-auto"
+            className="h-7 md:h-10 w-auto"
           />
         </div>
 

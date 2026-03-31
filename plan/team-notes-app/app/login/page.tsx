@@ -268,7 +268,7 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen bg-white flex items-center justify-center px-4">
-      <div className="w-full max-w-5xl grid grid-cols-1 md:grid-cols-2 gap-12 md:gap-50 items-center">
+      <div className="w-full max-w-5xl grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-20 items-center">
         {/* 왼쪽: 로고 */}
         <div className="flex justify-center md:justify-end">
           <div className="w-full max-w-md">
