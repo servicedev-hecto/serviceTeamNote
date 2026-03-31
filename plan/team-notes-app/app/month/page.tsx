@@ -42,13 +42,32 @@ function weekDatesFromAnchor(anchor: Date): Date[] {
   })
 }
 
-function groupTasksByDate(tasks: Task[]): Record<string, Task[]> {
+function groupTasksByDate(tasks: Task[], rangeStart?: string, rangeEnd?: string): Record<string, Task[]> {
   const map: Record<string, Task[]> = {}
-  for (const t of tasks) {
-    const d = t.date
-    if (!map[d]) map[d] = []
-    map[d].push(t)
+
+  const addToDate = (key: string, task: Task) => {
+    if (!map[key]) map[key] = []
+    if (!map[key].find((x) => x.id === task.id)) map[key].push(task)
   }
+
+  for (const t of tasks) {
+    const isInProgress = t.status === '시작 전' || t.status === '개발중'
+
+    if (isInProgress && t.registered_date && rangeStart && rangeEnd) {
+      // 등록일~배포일 사이 모든 날짜에 표시 (visible range 내에서만)
+      const spreadStart = t.registered_date > rangeStart ? t.registered_date : rangeStart
+      const spreadEnd = t.date < rangeEnd ? t.date : rangeEnd
+      const cur = new Date(spreadStart)
+      const endDate = new Date(spreadEnd)
+      while (cur <= endDate) {
+        addToDate(formatDateKey(cur), t)
+        cur.setDate(cur.getDate() + 1)
+      }
+    } else {
+      addToDate(t.date, t)
+    }
+  }
+
   for (const k of Object.keys(map)) {
     map[k].sort((a, b) => a.created_at.localeCompare(b.created_at))
   }
@@ -97,7 +116,20 @@ export default function MonthPage() {
 
   const minSwipeDistance = 50
 
-  const tasksByDate = useMemo(() => groupTasksByDate(tasks), [tasks])
+  const tasksByDate = useMemo(() => {
+    let rangeStart: string
+    let rangeEnd: string
+    if (calendarView === 'month') {
+      const r = getMonthRange(currentMonth)
+      rangeStart = r.start
+      rangeEnd = r.end
+    } else {
+      const r = getWeekRange(weekAnchor)
+      rangeStart = r.start
+      rangeEnd = r.end
+    }
+    return groupTasksByDate(tasks, rangeStart, rangeEnd)
+  }, [tasks, calendarView, currentMonth, weekAnchor])
 
   const loadProfile = async () => {
     const {
@@ -134,13 +166,31 @@ export default function MonthPage() {
       if (sk < start) start = sk
       if (sk > end) end = sk
     }
-    const { data, error } = await supabase
+    // 1) 배포일이 이번 기간 내인 태스크
+    const { data: data1, error } = await supabase
       .from('tasks')
       .select('*')
       .gte('date', start)
       .lte('date', end)
       .order('date', { ascending: true })
       .order('created_at', { ascending: true })
+
+    // 2) 진행 중(시작 전/개발중)이면서 등록일이 이번 기간 내이고 배포일이 기간 이후인 태스크
+    const { data: data2 } = await supabase
+      .from('tasks')
+      .select('*')
+      .gt('date', end)
+      .lte('registered_date', end)
+      .gte('registered_date', start)
+      .neq('status', '완료')
+
+    const seen = new Set<string>()
+    const merged = [...(data1 || []), ...(data2 || [])].filter((t) => {
+      if (seen.has(t.id)) return false
+      seen.add(t.id)
+      return true
+    })
+    const data = merged
 
     if (error) {
       console.error('tasks load error:', error.message)
