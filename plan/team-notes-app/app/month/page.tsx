@@ -847,14 +847,12 @@ export default function MonthPage() {
                             )}
                             {taskCount > 0 && (
                               <span
-                                className={`absolute bottom-1.5 left-1.5 flex items-center justify-center min-w-[6px] h-1.5 px-1 rounded-full text-[9px] font-bold leading-none ${
+                                className={`absolute bottom-1 left-1.5 text-[11px] font-bold leading-none ${
                                   isSelectedDate(day)
-                                    ? hasJiraOnDay
-                                      ? 'bg-white text-orange-600'
-                                      : 'bg-white/90 text-[#FF6114]'
+                                    ? 'text-white/90'
                                     : hasJiraOnDay
-                                      ? 'bg-orange-500 text-white'
-                                      : 'bg-[#FF6114] text-white'
+                                      ? 'text-orange-500'
+                                      : 'text-[#FF6114]'
                                 }`}
                                 title={`일정 ${taskCount}건`}
                               >
