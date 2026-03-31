@@ -326,6 +326,31 @@ alter table public.tasks add column if not exists assignee text;
 alter table public.tasks add column if not exists registered_date date;
 
 -- ============================================
+-- Storage: profiles 버킷 정책
+-- Supabase 대시보드 → Storage에서 'profiles' 버킷을 Public으로 먼저 생성 후 실행
+-- ============================================
+
+create policy "인증된 사용자는 아바타 업로드 가능"
+  on storage.objects for insert
+  to authenticated
+  with check (bucket_id = 'profiles');
+
+create policy "본인 아바타만 수정 가능"
+  on storage.objects for update
+  to authenticated
+  using (bucket_id = 'profiles');
+
+create policy "아바타 공개 읽기"
+  on storage.objects for select
+  to public
+  using (bucket_id = 'profiles');
+
+create policy "본인 아바타만 삭제 가능"
+  on storage.objects for delete
+  to authenticated
+  using (bucket_id = 'profiles');
+
+-- ============================================
 -- 6. 팀 계정 모음 테이블
 -- ============================================
 
