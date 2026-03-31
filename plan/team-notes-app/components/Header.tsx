@@ -11,6 +11,7 @@ interface HeaderProps {
   email?: string
   onLogout: () => void
   onProfileEdit?: () => void
+  onAccountsOpen?: () => void
 }
 
 // 프로필 첫 글자 가져오기 (닉네임 우선, 없으면 이메일)
@@ -24,7 +25,7 @@ function getProfileInitial(nickname: string | null | undefined, email: string | 
   return 'U'
 }
 
-export default function Header({ profile, email, onLogout, onProfileEdit }: HeaderProps) {
+export default function Header({ profile, email, onLogout, onProfileEdit, onAccountsOpen }: HeaderProps) {
   const [showProfileMenu, setShowProfileMenu] = useState(false)
 
   return (
@@ -41,6 +42,19 @@ export default function Header({ profile, email, onLogout, onProfileEdit }: Head
             className="h-10 w-auto"
           />
         </div>
+
+        {/* 팀 계정 버튼 */}
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => onAccountsOpen?.()}
+            className="flex items-center gap-2 px-3 py-2 text-sm text-gray-600 hover:text-orange-500 hover:bg-orange-50 rounded-lg transition-colors"
+            title="팀 계정 모음"
+          >
+            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
+            </svg>
+            <span className="hidden sm:inline">팀 계정</span>
+          </button>
 
         {/* 프로필 */}
         <div className="relative">
@@ -90,6 +104,7 @@ export default function Header({ profile, email, onLogout, onProfileEdit }: Head
               </button>
             </div>
           )}
+        </div>
         </div>
       </div>
     </header>

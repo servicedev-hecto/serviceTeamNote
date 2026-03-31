@@ -7,6 +7,7 @@ import { fetchHolidays, formatDateKey } from '@/lib/holidays'
 import Header from '@/components/Header'
 import Profile from '@/components/Profile'
 import TaskModal from '@/components/TaskModal'
+import AccountsModal from '@/components/AccountsModal'
 import type { Task } from '@/types/database.types'
 
 function getMonthRange(date: Date): { start: string; end: string } {
@@ -72,6 +73,7 @@ export default function MonthPage() {
   const [touchEnd, setTouchEnd] = useState<number | null>(null)
   const [holidays, setHolidays] = useState<Record<string, string>>({})
   const [showProfileEdit, setShowProfileEdit] = useState(false)
+  const [showAccountsModal, setShowAccountsModal] = useState(false)
 
   const [calendarView, setCalendarView] = useState<'month' | 'week'>('month')
   const [weekAnchor, setWeekAnchor] = useState(() => new Date())
@@ -612,6 +614,7 @@ export default function MonthPage() {
         email={user?.email}
         onLogout={handleLogout}
         onProfileEdit={() => setShowProfileEdit(true)}
+        onAccountsOpen={() => setShowAccountsModal(true)}
       />
 
       {showProfileEdit && (
@@ -621,6 +624,10 @@ export default function MonthPage() {
             loadProfile()
           }}
         />
+      )}
+
+      {showAccountsModal && (
+        <AccountsModal onClose={() => setShowAccountsModal(false)} />
       )}
 
       <TaskModal
