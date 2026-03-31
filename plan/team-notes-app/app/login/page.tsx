@@ -79,10 +79,11 @@ export default function LoginPage() {
     setForgotLoading(true)
 
     try {
+      const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || window.location.origin
       const { error: resetError } = await supabase.auth.resetPasswordForEmail(
         forgotEmail.trim().toLowerCase(),
         {
-          redirectTo: `${window.location.origin}/auth/callback?next=/reset-password`,
+          redirectTo: `${siteUrl}/auth/callback?next=/reset-password`,
         }
       )
 
