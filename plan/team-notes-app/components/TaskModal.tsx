@@ -211,7 +211,7 @@ export default function TaskModal({
         if (e.target === e.currentTarget && !saving) onClose()
       }}
     >
-      <div className="bg-white rounded-xl shadow-xl w-full max-w-lg max-h-[90vh] overflow-y-auto p-4 md:p-8 animate-in fade-in zoom-in-95 duration-200">
+      <div className="bg-white rounded-xl shadow-xl w-full max-w-lg md:max-w-2xl max-h-[90vh] overflow-y-auto p-4 md:p-8 animate-in fade-in zoom-in-95 duration-200">
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-xl font-semibold text-gray-900">
             {mode === 'create' ? '일정 등록' : '일정 수정'}
