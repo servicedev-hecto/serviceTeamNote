@@ -12,6 +12,8 @@ export interface Task {
   /** 캘린더에서「일정 추가」할 때 선택했던 날짜 (없으면 예전 행은 created_at 날짜로 표시) */
   registered_date: string | null
   is_completed: boolean
+  status: string | null
+  dev_type: string | null
   assignee: string | null
   jira_ticket_id: string | null
   jira_ticket_url: string | null

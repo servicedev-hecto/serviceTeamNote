@@ -12,6 +12,8 @@ export interface TaskModalSubmitPayload {
   /** 신규만: 캘린더에서 일정 추가 시 선택했던 날짜 */
   registered_date: string | null
   assignee: string
+  status: string
+  dev_type: string
   jira_ticket_id: string
   jira_ticket_url: string
   jira_title: string | null
@@ -58,6 +60,8 @@ export default function TaskModal({
   const [content, setContent] = useState('')
   const [date, setDate] = useState(defaultDate)
   const [assignee, setAssignee] = useState('')
+  const [status, setStatus] = useState('시작 전')
+  const [devType, setDevType] = useState('')
   const [jiraTicketId, setJiraTicketId] = useState('')
   const [jiraTicketUrl, setJiraTicketUrl] = useState('')
   const [jiraTitle, setJiraTitle] = useState<string | null>(null)
@@ -90,6 +94,8 @@ export default function TaskModal({
         setDate(task.date)
       }
       setAssignee(task.assignee ?? '')
+      setStatus(task.status ?? '시작 전')
+      setDevType(task.dev_type ?? '')
       setJiraTicketId(task.jira_ticket_id ?? '')
       setJiraTicketUrl(task.jira_ticket_url ?? '')
       setJiraTitle(task.jira_title ?? null)
@@ -101,6 +107,8 @@ export default function TaskModal({
       setContent('')
       setDate('')
       setAssignee('')
+      setStatus('시작 전')
+      setDevType('')
       setJiraTicketId('')
       setJiraTicketUrl('')
       setJiraTitle(null)
@@ -176,6 +184,8 @@ export default function TaskModal({
         registered_date:
           mode === 'create' ? (registerCalendarDate.trim() || defaultDate) : null,
         assignee: assignee.trim(),
+        status,
+        dev_type: devType,
         jira_ticket_id: jiraTicketId.trim(),
         jira_ticket_url: jiraTicketUrl.trim(),
         jira_title: hasJira ? jiraTitle : null,
@@ -316,6 +326,49 @@ export default function TaskModal({
                 <code className="text-[11px] bg-gray-100 px-0.5 rounded">[YY-MM-DD]</code> → 아래 입력칸 → (비었을 때){' '}
                 등록일. Jira 조회 시에는 제목 날짜 → 마감일 → 등록일 순으로 채웁니다.
               </p>
+            </div>
+
+            <div className="flex gap-4">
+              <div className="flex-1">
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">진행 상태</label>
+                <div className="flex gap-2">
+                  {(['시작 전', '개발중', '완료'] as const).map((s) => (
+                    <button
+                      key={s}
+                      type="button"
+                      onClick={() => setStatus(s)}
+                      className={`flex-1 py-2 text-sm font-medium rounded-md border transition-colors ${
+                        status === s
+                          ? s === '완료' ? 'bg-green-500 text-white border-green-500'
+                            : s === '개발중' ? 'bg-blue-500 text-white border-blue-500'
+                            : 'bg-gray-500 text-white border-gray-500'
+                          : 'bg-white text-gray-600 border-gray-200 hover:border-gray-400'
+                      }`}
+                    >
+                      {s}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div className="flex-1">
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">구분 (선택)</label>
+                <div className="flex gap-2">
+                  {(['퍼블', '개발', '퍼블+개발'] as const).map((d) => (
+                    <button
+                      key={d}
+                      type="button"
+                      onClick={() => setDevType(devType === d ? '' : d)}
+                      className={`flex-1 py-2 text-sm font-medium rounded-md border transition-colors ${
+                        devType === d
+                          ? 'bg-orange-500 text-white border-orange-500'
+                          : 'bg-white text-gray-600 border-gray-200 hover:border-gray-400'
+                      }`}
+                    >
+                      {d}
+                    </button>
+                  ))}
+                </div>
+              </div>
             </div>
 
             <div>

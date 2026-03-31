@@ -444,6 +444,8 @@ export default function MonthPage() {
     date: string
     registered_date: string | null
     assignee: string
+    status: string
+    dev_type: string
     jira_ticket_id: string
     jira_ticket_url: string
     jira_title: string | null
@@ -464,6 +466,8 @@ export default function MonthPage() {
         date: payload.date,
         registered_date: regDate,
         assignee: payload.assignee || null,
+        status: payload.status || '시작 전',
+        dev_type: payload.dev_type || null,
         jira_ticket_id: payload.jira_ticket_id || null,
         jira_ticket_url: payload.jira_ticket_url || null,
         jira_title: jiraLinked ? payload.jira_title : null,
@@ -482,6 +486,8 @@ export default function MonthPage() {
           content: payload.content || null,
           date: payload.date,
           assignee: payload.assignee || null,
+          status: payload.status || '시작 전',
+          dev_type: payload.dev_type || null,
           jira_ticket_id: payload.jira_ticket_id || null,
           jira_ticket_url: payload.jira_ticket_url || null,
           jira_title: jiraLinked ? payload.jira_title : null,
@@ -1103,6 +1109,23 @@ export default function MonthPage() {
                     </div>
 
                     {task.content && <p className="text-sm text-gray-600 mb-3 whitespace-pre-wrap pl-7">{task.content}</p>}
+
+                    <div className="flex flex-wrap items-center gap-1.5 mb-2 pl-7">
+                      {task.status && (
+                        <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
+                          task.status === '완료' ? 'bg-green-100 text-green-700'
+                          : task.status === '개발중' ? 'bg-blue-100 text-blue-700'
+                          : 'bg-gray-100 text-gray-600'
+                        }`}>
+                          {task.status}
+                        </span>
+                      )}
+                      {task.dev_type && (
+                        <span className="text-xs px-2 py-0.5 rounded-full font-medium bg-orange-100 text-orange-700">
+                          {task.dev_type}
+                        </span>
+                      )}
+                    </div>
 
                     <div className="flex flex-wrap items-center gap-x-2 gap-y-1 mb-2 pl-7 text-xs text-gray-500">
                       {task.assignee?.trim() && (

@@ -325,6 +325,12 @@ alter table public.tasks add column if not exists assignee text;
 -- 등록일(registered_date) — 캘린더에서 일정 추가 시 선택한 날짜 저장
 alter table public.tasks add column if not exists registered_date date;
 
+-- 진행 상태 (시작 전 / 개발중 / 완료)
+alter table public.tasks add column if not exists status text default '시작 전';
+
+-- 퍼블/개발 구분 (퍼블 / 개발 / 퍼블+개발)
+alter table public.tasks add column if not exists dev_type text;
+
 -- ============================================
 -- Storage: profiles 버킷 정책
 -- Supabase 대시보드 → Storage에서 'profiles' 버킷을 Public으로 먼저 생성 후 실행
