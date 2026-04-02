@@ -8,6 +8,7 @@ import Header from '@/components/Header'
 import Profile from '@/components/Profile'
 import TaskModal from '@/components/TaskModal'
 import AccountsModal from '@/components/AccountsModal'
+import WeeklyReportModal from '@/components/WeeklyReportModal'
 import type { Task } from '@/types/database.types'
 
 function getMonthRange(date: Date): { start: string; end: string } {
@@ -93,6 +94,7 @@ export default function MonthPage() {
   const [holidays, setHolidays] = useState<Record<string, string>>({})
   const [showProfileEdit, setShowProfileEdit] = useState(false)
   const [showAccountsModal, setShowAccountsModal] = useState(false)
+  const [showWeeklyReport, setShowWeeklyReport] = useState(false)
 
   const [calendarView, setCalendarView] = useState<'month' | 'week'>('month')
   const [weekAnchor, setWeekAnchor] = useState(() => new Date())
@@ -686,6 +688,15 @@ export default function MonthPage() {
         <AccountsModal onClose={() => setShowAccountsModal(false)} />
       )}
 
+      {showWeeklyReport && (
+        <WeeklyReportModal
+          weekAnchor={weekAnchor}
+          thisWeekTasks={tasks}
+          nickname={(profile as { nickname?: string })?.nickname || ''}
+          onClose={() => setShowWeeklyReport(false)}
+        />
+      )}
+
       <TaskModal
         open={taskModalOpen}
         mode={taskModalMode}
@@ -885,6 +896,13 @@ export default function MonthPage() {
                     <p className="text-xs font-semibold text-[#aaaaaa] uppercase tracking-wide mb-2">이번 주</p>
                     <h2 className="text-2xl font-black text-gray-900 leading-tight">{weekRangeLabel}</h2>
                     <p className="text-sm text-gray-500 mt-2">회의용으로 한 주 일정을 한눈에 볼 수 있어요.</p>
+                  <button
+                    type="button"
+                    onClick={() => setShowWeeklyReport(true)}
+                    className="mt-3 px-3 py-1.5 text-xs font-medium bg-orange-50 text-orange-600 border border-orange-200 hover:bg-orange-100 rounded-lg transition-colors"
+                  >
+                    📋 주간보고 정리하기
+                  </button>
                   </div>
                   <div className="flex items-center gap-2 shrink-0">
                     <button
