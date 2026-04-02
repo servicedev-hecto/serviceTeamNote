@@ -5,6 +5,9 @@ import type { Task } from '@/types/database.types'
 import { parseDeployDateFromTitle } from '@/lib/deployDateFromTitle'
 import { formatDateKey } from '@/lib/holidays'
 
+const TEAM_MEMBERS = ['고진석', '김아름', '조소영', '김영은']
+const DEV_TYPES = ['퍼블', '개발', '퍼블+개발', '일상'] as const
+
 export interface TaskModalSubmitPayload {
   title: string
   content: string
@@ -14,6 +17,7 @@ export interface TaskModalSubmitPayload {
   assignee: string
   status: string
   dev_type: string
+  is_event: boolean
   jira_ticket_id: string
   jira_ticket_url: string
   jira_title: string | null
@@ -59,9 +63,10 @@ export default function TaskModal({
   const [title, setTitle] = useState('')
   const [content, setContent] = useState('')
   const [date, setDate] = useState(defaultDate)
-  const [assignee, setAssignee] = useState('')
+  const [selectedAssignees, setSelectedAssignees] = useState<string[]>([])
   const [status, setStatus] = useState('시작 전')
   const [devType, setDevType] = useState('')
+  const [isEvent, setIsEvent] = useState(false)
   const [jiraTicketId, setJiraTicketId] = useState('')
   const [jiraTicketUrl, setJiraTicketUrl] = useState('')
   const [jiraTitle, setJiraTitle] = useState<string | null>(null)
@@ -93,9 +98,12 @@ export default function TaskModal({
       } else {
         setDate(task.date)
       }
-      setAssignee(task.assignee ?? '')
+      setSelectedAssignees(
+        (task.assignee ?? '').split(',').map((s) => s.trim()).filter(Boolean)
+      )
       setStatus(task.status ?? '시작 전')
       setDevType(task.dev_type ?? '')
+      setIsEvent((task as Task & { is_event?: boolean }).is_event ?? false)
       setJiraTicketId(task.jira_ticket_id ?? '')
       setJiraTicketUrl(task.jira_ticket_url ?? '')
       setJiraTitle(task.jira_title ?? null)
@@ -106,9 +114,10 @@ export default function TaskModal({
       setTitle('')
       setContent('')
       setDate('')
-      setAssignee('')
+      setSelectedAssignees([])
       setStatus('시작 전')
       setDevType('')
+      setIsEvent(false)
       setJiraTicketId('')
       setJiraTicketUrl('')
       setJiraTitle(null)
@@ -144,7 +153,7 @@ export default function TaskModal({
       const jiraName = data.assigneeDisplayName as string | null
       setJiraAssignee(jiraName)
       if (data.summary) setTitle(data.summary)
-      if (jiraName) setAssignee(jiraName)
+      if (jiraName) setSelectedAssignees([jiraName])
       const fromTitle = data.summary ? parseDeployDateFromTitle(String(data.summary)) : null
       if (fromTitle) setDate(fromTitle)
       else if (data.duedate) setDate(data.duedate)
@@ -183,9 +192,10 @@ export default function TaskModal({
         date: deployDate,
         registered_date:
           mode === 'create' ? (registerCalendarDate.trim() || defaultDate) : null,
-        assignee: assignee.trim(),
+        assignee: selectedAssignees.join(', '),
         status,
         dev_type: devType,
+        is_event: isEvent,
         jira_ticket_id: jiraTicketId.trim(),
         jira_ticket_url: jiraTicketUrl.trim(),
         jira_title: hasJira ? jiraTitle : null,
@@ -328,58 +338,88 @@ export default function TaskModal({
               </p>
             </div>
 
-            <div className="flex gap-4">
-              <div className="flex-1">
-                <label className="block text-sm font-medium text-gray-700 mb-1.5">진행 상태</label>
-                <div className="flex gap-2">
-                  {(['시작 전', '개발중', '완료'] as const).map((s) => (
-                    <button
-                      key={s}
-                      type="button"
-                      onClick={() => setStatus(s)}
-                      className={`flex-1 py-2 text-sm font-medium rounded-md border transition-colors ${
-                        status === s
-                          ? s === '완료' ? 'bg-green-500 text-white border-green-500'
-                            : s === '개발중' ? 'bg-blue-500 text-white border-blue-500'
-                            : 'bg-gray-500 text-white border-gray-500'
-                          : 'bg-white text-gray-600 border-gray-200 hover:border-gray-400'
-                      }`}
-                    >
-                      {s}
-                    </button>
-                  ))}
-                </div>
-              </div>
-              <div className="flex-1">
-                <label className="block text-sm font-medium text-gray-700 mb-1.5">구분 (선택)</label>
-                <div className="flex gap-2">
-                  {(['퍼블', '개발', '퍼블+개발'] as const).map((d) => (
-                    <button
-                      key={d}
-                      type="button"
-                      onClick={() => setDevType(devType === d ? '' : d)}
-                      className={`flex-1 py-2 text-sm font-medium rounded-md border transition-colors ${
-                        devType === d
-                          ? 'bg-orange-500 text-white border-orange-500'
-                          : 'bg-white text-gray-600 border-gray-200 hover:border-gray-400'
-                      }`}
-                    >
-                      {d}
-                    </button>
-                  ))}
-                </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">진행 상태</label>
+              <div className="flex gap-2">
+                {(['시작 전', '개발중', '완료'] as const).map((s) => (
+                  <button
+                    key={s}
+                    type="button"
+                    onClick={() => setStatus(s)}
+                    className={`flex-1 py-2 text-sm font-medium rounded-md border transition-colors ${
+                      status === s
+                        ? s === '완료' ? 'bg-green-500 text-white border-green-500'
+                          : s === '개발중' ? 'bg-blue-500 text-white border-blue-500'
+                          : 'bg-gray-500 text-white border-gray-500'
+                        : 'bg-white text-gray-600 border-gray-200 hover:border-gray-400'
+                    }`}
+                  >
+                    {s}
+                  </button>
+                ))}
               </div>
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">담당자 (선택)</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">구분 (선택)</label>
+              <div className="flex gap-2 flex-wrap">
+                {DEV_TYPES.map((d) => (
+                  <button
+                    key={d}
+                    type="button"
+                    onClick={() => setDevType(devType === d ? '' : d)}
+                    className={`px-4 py-2 text-sm font-medium rounded-md border transition-colors ${
+                      devType === d
+                        ? d === '일상'
+                          ? 'bg-purple-500 text-white border-purple-500'
+                          : 'bg-orange-500 text-white border-orange-500'
+                        : 'bg-white text-gray-600 border-gray-200 hover:border-gray-400'
+                    }`}
+                  >
+                    {d}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">담당자 (복수 선택 가능)</label>
+              <div className="flex gap-2 flex-wrap">
+                {TEAM_MEMBERS.map((name) => (
+                  <button
+                    key={name}
+                    type="button"
+                    onClick={() =>
+                      setSelectedAssignees((prev) =>
+                        prev.includes(name) ? prev.filter((n) => n !== name) : [...prev, name]
+                      )
+                    }
+                    className={`px-4 py-2 text-sm font-medium rounded-md border transition-colors ${
+                      selectedAssignees.includes(name)
+                        ? 'bg-gray-700 text-white border-gray-700'
+                        : 'bg-white text-gray-600 border-gray-200 hover:border-gray-400'
+                    }`}
+                  >
+                    {name}
+                  </button>
+                ))}
+              </div>
+              {selectedAssignees.length > 0 && (
+                <p className="mt-1.5 text-xs text-gray-500">선택됨: {selectedAssignees.join(', ')}</p>
+              )}
+            </div>
+
+            <div className="flex items-center gap-3">
               <input
-                type="text"
-                value={assignee}
-                onChange={(e) => setAssignee(e.target.value)}
-                className={inputBase}
-                placeholder="비워 둘 수 있습니다 (Jira 담당자로 자동 채움 가능)"
+                type="checkbox"
+                id="is_event"
+                checked={isEvent}
+                onChange={(e) => setIsEvent(e.target.checked)}
+                className="w-4 h-4 rounded border-gray-300 text-orange-500 focus:ring-orange-500"
               />
+              <label htmlFor="is_event" className="text-sm font-medium text-gray-700 cursor-pointer">
+                이벤트 일정 <span className="text-xs text-gray-400 font-normal">(주간보고 이벤트 섹션에 포함)</span>
+              </label>
             </div>
 
             <div>

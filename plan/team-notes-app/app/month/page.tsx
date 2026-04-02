@@ -498,6 +498,7 @@ export default function MonthPage() {
     assignee: string
     status: string
     dev_type: string
+    is_event: boolean
     jira_ticket_id: string
     jira_ticket_url: string
     jira_title: string | null
@@ -520,6 +521,7 @@ export default function MonthPage() {
         assignee: payload.assignee || null,
         status: payload.status || '시작 전',
         dev_type: payload.dev_type || null,
+        is_event: payload.is_event,
         jira_ticket_id: payload.jira_ticket_id || null,
         jira_ticket_url: payload.jira_ticket_url || null,
         jira_title: jiraLinked ? payload.jira_title : null,
@@ -540,6 +542,7 @@ export default function MonthPage() {
           assignee: payload.assignee || null,
           status: payload.status || '시작 전',
           dev_type: payload.dev_type || null,
+          is_event: payload.is_event,
           jira_ticket_id: payload.jira_ticket_id || null,
           jira_ticket_url: payload.jira_ticket_url || null,
           jira_title: jiraLinked ? payload.jira_title : null,
@@ -1116,6 +1119,7 @@ export default function MonthPage() {
                       isSel ? 'border-orange-500 ring-2 ring-orange-200 shadow-md' : 'border-gray-200 hover:shadow-md'
                     } ${task.is_completed ? 'opacity-70' : ''}`}
                   >
+                    {/* 상단: 체크박스 + 제목 + 담당자 아이콘 + 수정/삭제 */}
                     <div className="flex items-start justify-between gap-2 mb-2">
                       <div className="flex items-start gap-2 min-w-0 flex-1">
                         <input
@@ -1131,12 +1135,26 @@ export default function MonthPage() {
                           title={isOwner ? '완료' : '작성자만 변경 가능'}
                         />
                         <h3
-                          className={`font-semibold text-gray-900 break-words ${
+                          className={`text-base font-semibold text-gray-900 break-words ${
                             task.is_completed ? 'line-through text-gray-500' : ''
                           }`}
                         >
                           {task.title}
                         </h3>
+                        {/* 담당자 아이콘 */}
+                        {task.assignee?.trim() && (
+                          <div className="flex items-center gap-0.5 shrink-0 mt-0.5">
+                            {task.assignee.split(',').map((name) => name.trim()).filter(Boolean).map((name, i) => (
+                              <span
+                                key={i}
+                                title={name}
+                                className="w-6 h-6 rounded-full bg-gray-200 text-gray-700 text-[11px] font-bold flex items-center justify-center shrink-0"
+                              >
+                                {name[0]}
+                              </span>
+                            ))}
+                          </div>
+                        )}
                       </div>
                       {isOwner && (
                         <div className="flex items-center gap-1 shrink-0" onClick={(e) => e.stopPropagation()}>
@@ -1147,12 +1165,7 @@ export default function MonthPage() {
                             title="수정"
                           >
                             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
-                              />
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                             </svg>
                           </button>
                           <button
@@ -1162,12 +1175,7 @@ export default function MonthPage() {
                             title="삭제"
                           >
                             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                              />
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                             </svg>
                           </button>
                         </div>
@@ -1176,55 +1184,45 @@ export default function MonthPage() {
 
                     {task.content && <p className="text-sm text-gray-600 mb-3 whitespace-pre-wrap pl-7">{task.content}</p>}
 
-                    <div className="flex flex-wrap items-center gap-1.5 mb-2 pl-7">
-                      {task.status && (
-                        <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
-                          task.status === '완료' ? 'bg-green-100 text-green-700'
-                          : task.status === '개발중' ? 'bg-blue-100 text-blue-700'
-                          : 'bg-gray-100 text-gray-600'
-                        }`}>
-                          {task.status}
-                        </span>
-                      )}
-                      {task.dev_type && (
-                        <span className="text-xs px-2 py-0.5 rounded-full font-medium bg-orange-100 text-orange-700">
-                          {task.dev_type}
-                        </span>
-                      )}
-                    </div>
+                    {/* 하단: 배지 + 날짜 우측 정렬 */}
+                    <div className="flex items-end justify-between gap-2 pl-7">
+                      <div className="flex flex-wrap items-center gap-1.5">
+                        {task.status && (
+                          <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
+                            task.status === '완료' ? 'bg-green-100 text-green-700'
+                            : task.status === '개발중' ? 'bg-blue-100 text-blue-700'
+                            : 'bg-gray-100 text-gray-600'
+                          }`}>
+                            {task.status}
+                          </span>
+                        )}
+                        {task.dev_type && (
+                          <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
+                            task.dev_type === '일상' ? 'bg-purple-100 text-purple-700' : 'bg-orange-100 text-orange-700'
+                          }`}>
+                            {task.dev_type}
+                          </span>
+                        )}
+                      </div>
 
-                    <div className="flex flex-wrap items-center gap-x-2 gap-y-1 mb-2 pl-7 text-xs text-gray-500">
-                      {task.assignee?.trim() && (
-                        <>
-                          <span>담당: {task.assignee}</span>
-                          <span className="text-gray-300 select-none" aria-hidden>
-                            |
-                          </span>
-                        </>
-                      )}
-                      <span>작성: {authorByUserId[task.created_by]?.trim() || '—'}</span>
-                      <span className="text-gray-300 select-none" aria-hidden>
-                        |
-                      </span>
-                      <span>배포 {task.date}</span>
-                      <span className="text-gray-300 select-none" aria-hidden>
-                        |
-                      </span>
-                      <span>
-                        등록 {task.registered_date ?? formatDateKey(new Date(task.created_at))}
-                      </span>
-                      {task.is_jira_linked && (
-                        <>
-                          <span className="text-gray-300 select-none" aria-hidden>
-                            |
-                          </span>
-                          <span className="text-orange-600 font-medium">Jira</span>
-                        </>
-                      )}
+                      {/* 날짜 정보 우측 하단 */}
+                      <div className="flex flex-wrap items-center justify-end gap-x-2 gap-y-0.5 text-xs text-gray-400 shrink-0">
+                        <span>작성: {authorByUserId[task.created_by]?.trim() || '—'}</span>
+                        <span>|</span>
+                        <span>배포 {task.date}</span>
+                        <span>|</span>
+                        <span>등록 {task.registered_date ?? formatDateKey(new Date(task.created_at))}</span>
+                        {task.is_jira_linked && (
+                          <>
+                            <span>|</span>
+                            <span className="text-orange-500 font-medium">Jira</span>
+                          </>
+                        )}
+                      </div>
                     </div>
 
                     {(task.jira_ticket_url || task.jira_ticket_id) && (
-                      <div className="pl-7">
+                      <div className="pl-7 mt-1.5">
                         {task.jira_ticket_url ? (
                           <a
                             href={task.jira_ticket_url}
@@ -1233,7 +1231,7 @@ export default function MonthPage() {
                             onClick={(e) => e.stopPropagation()}
                             className="text-sm text-blue-600 hover:underline inline-flex items-center gap-1"
                           >
-                            🔗 {task.jira_ticket_id || '티켓 링크'}
+                            🔗 티켓 링크
                           </a>
                         ) : (
                           <span className="text-sm text-blue-600">🔗 {task.jira_ticket_id}</span>

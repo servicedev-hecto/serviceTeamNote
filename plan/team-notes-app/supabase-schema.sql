@@ -328,8 +328,11 @@ alter table public.tasks add column if not exists registered_date date;
 -- 진행 상태 (시작 전 / 개발중 / 완료)
 alter table public.tasks add column if not exists status text default '시작 전';
 
--- 퍼블/개발 구분 (퍼블 / 개발 / 퍼블+개발)
+-- 퍼블/개발 구분 (퍼블 / 개발 / 퍼블+개발 / 일상)
 alter table public.tasks add column if not exists dev_type text;
+
+-- 이벤트 일정 여부 (주간보고 이벤트 섹션 노출용)
+alter table public.tasks add column if not exists is_event boolean default false;
 
 -- ============================================
 -- Storage: profiles 버킷 정책

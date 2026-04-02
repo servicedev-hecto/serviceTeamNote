@@ -22,6 +22,7 @@ export interface Task {
   jira_priority: string | null
   jira_assignee: string | null
   is_jira_linked: boolean
+  is_event: boolean
 }
 
 export type TaskInsert = Omit<Task, 'id' | 'created_at' | 'updated_at'> & {

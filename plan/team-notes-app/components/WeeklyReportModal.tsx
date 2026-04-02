@@ -61,9 +61,9 @@ export default function WeeklyReportModal({ weekAnchor, thisWeekTasks, nickname,
   const eventRangeEnd = new Date(weekStart)
   eventRangeEnd.setDate(eventRangeEnd.getDate() + 42) // 6주
 
-  // 금주 태스크: 배포일이 이번 주에 해당하는 것만
+  // 금주 태스크: 배포일이 이번 주, 일상 제외
   const thisWeekFiltered = thisWeekTasks
-    .filter((t) => t.date >= formatKey(weekStart) && t.date <= formatKey(weekEnd))
+    .filter((t) => t.date >= formatKey(weekStart) && t.date <= formatKey(weekEnd) && t.dev_type !== '일상')
     .sort((a, b) => a.date.localeCompare(b.date))
 
   useEffect(() => {
@@ -73,6 +73,7 @@ export default function WeeklyReportModal({ weekAnchor, thisWeekTasks, nickname,
         .select('*')
         .gte('date', formatKey(nextWeekStart))
         .lte('date', formatKey(nextWeekEnd))
+        .neq('dev_type', '일상')
         .order('date', { ascending: true })
       setNextWeekTasks((nw as Task[]) || [])
 
@@ -81,6 +82,7 @@ export default function WeeklyReportModal({ weekAnchor, thisWeekTasks, nickname,
         .select('*')
         .gt('date', formatKey(weekEnd))
         .lte('date', formatKey(eventRangeEnd))
+        .eq('is_event', true)
         .order('date', { ascending: true })
       setEventTasks((ev as Task[]) || [])
     }
