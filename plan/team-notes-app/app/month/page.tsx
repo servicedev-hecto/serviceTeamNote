@@ -1149,13 +1149,13 @@ export default function MonthPage() {
                           }`}
                         >
                           {task.is_event && (
-                            <span className="text-indigo-500 font-bold mr-1">[EVENT]</span>
+                            <span className="text-[#aaa] font-bold mr-1">[EVENT]</span>
                           )}
                           {task.title}
                         </h3>
                         {/* 담당자 아이콘 (겹치기) */}
                         {task.assignee?.trim() && (
-                          <div className="flex items-center shrink-0 mt-0.5">
+                          <div className="flex items-center shrink-0" style={{ marginTop: -2 }}>
                             {task.assignee.split(',').map((name) => name.trim()).filter(Boolean).map((name, i) => (
                               avatarByNickname[name] ? (
                                 <img
@@ -1164,14 +1164,14 @@ export default function MonthPage() {
                                   alt={name}
                                   title={name}
                                   style={{ zIndex: i }}
-                                  className="w-6 h-6 rounded-full object-cover border-2 border-white shrink-0 -ml-1.5 first:ml-0"
+                                  className="w-8 h-8 rounded-full object-cover border-2 border-white shrink-0 -ml-2 first:ml-0"
                                 />
                               ) : (
                                 <span
                                   key={i}
                                   title={name}
                                   style={{ zIndex: i }}
-                                  className="w-6 h-6 rounded-full bg-gray-200 text-gray-700 text-[11px] font-bold flex items-center justify-center shrink-0 border-2 border-white -ml-1.5 first:ml-0"
+                                  className="w-8 h-8 rounded-full bg-gray-200 text-gray-700 text-xs font-bold flex items-center justify-center shrink-0 border-2 border-white -ml-2 first:ml-0"
                                 >
                                   {name[0]}
                                 </span>
@@ -1209,7 +1209,7 @@ export default function MonthPage() {
                     {task.content && <p className="text-sm text-gray-600 mb-3 whitespace-pre-wrap pl-7">{task.content}</p>}
 
                     {/* 하단: 배지 + 날짜 우측 정렬 */}
-                    <div className="flex items-end justify-between gap-2 pl-7">
+                    <div className="flex items-end justify-between gap-2 pl-7" style={{ marginTop: 10 }}>
                       <div className="flex flex-wrap items-center gap-1.5">
                         {task.status && (
                           <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
