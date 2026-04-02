@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Create Next App",
-  description: "서비스개발팀노트",
+  title: "serviceNote | Hecto Healthcare",
+  description: "헥헬 서개노트",
   icons: {
     icon: "/favicon.ico",
   },
