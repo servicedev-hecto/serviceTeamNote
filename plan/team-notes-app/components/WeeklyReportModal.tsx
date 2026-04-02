@@ -88,47 +88,85 @@ export default function WeeklyReportModal({ weekAnchor, thisWeekTasks, nickname,
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  const generatePlainText = (): string => {
-    const lines: string[] = []
-    lines.push(`[서비스개발팀] ${reportMonth}월 ${weekNum}주차 주간보고`)
-    lines.push('')
-    lines.push('안녕하세요 실장님')
-    lines.push(`${nickname}입니다.`)
-    lines.push('')
-    lines.push('서비스개발팀 주간보고 송부드립니다.')
-    lines.push('')
-    lines.push('[API 대기 업무]')
-    lines.push('- 없음')
-    lines.push('')
-    lines.push('[금주업무]  회색 : 배포완료')
-    lines.push('내용\t배포(예정)일\t담당자')
-    thisWeekFiltered.forEach((t) => {
-      lines.push(`${t.title}\t${formatDateMD(t.date)}\t${t.assignee || ''}`)
-    })
-    if (thisWeekFiltered.length === 0) lines.push('- 없음')
-    lines.push('')
-    lines.push('[차주업무]')
-    lines.push('내용\t담당자')
-    nextWeekTasks.forEach((t) => {
-      lines.push(`${t.title}\t${t.assignee || ''}`)
-    })
-    if (nextWeekTasks.length === 0) lines.push('- 없음')
-    lines.push('')
-    lines.push('[이벤트] 회색 : 배포완료')
-    lines.push('No\t이벤트명\t개시일\t페이지 유무\t개발 필요 여부')
-    eventTasks.forEach((t, i) => {
-      const hasPage = t.dev_type?.includes('퍼블') ? '○' : ''
-      const needsDev = t.dev_type?.includes('개발') ? '○' : ''
-      lines.push(`${i + 1}\t${t.title}\t${formatDateFull(t.date)}\t${hasPage}\t${needsDev}`)
-    })
-    if (eventTasks.length === 0) lines.push('- 없음')
-    lines.push('')
-    lines.push('이상입니다.')
-    return lines.join('\n')
+  const thStyle = 'background:#4472C4;color:white;border:1px solid #ccc;padding:6px 10px;text-align:center;font-size:12px;white-space:nowrap;'
+  const tdStyle = 'border:1px solid #ccc;padding:6px 10px;font-size:12px;'
+  const tdCenterStyle = 'border:1px solid #ccc;padding:6px 10px;font-size:12px;text-align:center;'
+  const grayRowStyle = 'background:#d0d0d0;color:#777;'
+
+  const generateHTML = (): string => {
+    const tableStyle = 'border-collapse:collapse;width:100%;margin-bottom:16px;'
+
+    const thisWeekRows = thisWeekFiltered.map((t) =>
+      `<tr style="${t.is_completed ? grayRowStyle : ''}">
+        <td style="${tdStyle}">${t.title}</td>
+        <td style="${tdCenterStyle}">${formatDateMD(t.date)}</td>
+        <td style="${tdCenterStyle}">${t.assignee || ''}</td>
+      </tr>`
+    ).join('')
+
+    const nextWeekRows = nextWeekTasks.map((t) =>
+      `<tr style="${t.is_completed ? grayRowStyle : ''}">
+        <td style="${tdStyle}">${t.title}</td>
+        <td style="${tdCenterStyle}">${t.assignee || ''}</td>
+      </tr>`
+    ).join('')
+
+    const eventRows = eventTasks.map((t, i) =>
+      `<tr style="${t.is_completed ? grayRowStyle : ''}">
+        <td style="${tdCenterStyle}">${i + 1}</td>
+        <td style="${tdStyle}">${t.title}</td>
+        <td style="${tdCenterStyle}">${formatDateFull(t.date)}</td>
+        <td style="${tdCenterStyle}">${t.dev_type?.includes('퍼블') ? '○' : ''}</td>
+        <td style="${tdCenterStyle}">${t.dev_type?.includes('개발') ? '○' : ''}</td>
+      </tr>`
+    ).join('')
+
+    return `
+<p>안녕하세요 실장님<br>${nickname}입니다.</p>
+<p>서비스개발팀 주간보고 송부드립니다.</p>
+<p><b>[API 대기 업무]</b><br>- 없음</p>
+<p><b>[금주업무]</b>&nbsp; 회색 : 배포완료</p>
+${thisWeekFiltered.length === 0
+  ? '<p>- 없음</p>'
+  : `<table style="${tableStyle}"><thead><tr>
+      <th style="${thStyle}text-align:left;">내용</th>
+      <th style="${thStyle}">배포(예정)일</th>
+      <th style="${thStyle}">담당자</th>
+    </tr></thead><tbody>${thisWeekRows}</tbody></table>`}
+<p><b>[차주업무]</b></p>
+${nextWeekTasks.length === 0
+  ? '<p>- 없음</p>'
+  : `<table style="${tableStyle}"><thead><tr>
+      <th style="${thStyle}text-align:left;">내용</th>
+      <th style="${thStyle}">담당자</th>
+    </tr></thead><tbody>${nextWeekRows}</tbody></table>`}
+<p><b>[이벤트]</b>&nbsp; 회색 : 배포완료</p>
+${eventTasks.length === 0
+  ? '<p>- 없음</p>'
+  : `<table style="${tableStyle}"><thead><tr>
+      <th style="${thStyle}">No</th>
+      <th style="${thStyle}text-align:left;">이벤트명</th>
+      <th style="${thStyle}">개시일</th>
+      <th style="${thStyle}">페이지 유무</th>
+      <th style="${thStyle}">개발 필요 여부</th>
+    </tr></thead><tbody>${eventRows}</tbody></table>`}
+<p>이상입니다.</p>`
   }
 
   const handleCopy = async () => {
-    await navigator.clipboard.writeText(generatePlainText())
+    try {
+      const html = generateHTML()
+      await navigator.clipboard.write([
+        new ClipboardItem({
+          'text/html': new Blob([html], { type: 'text/html' }),
+          'text/plain': new Blob([html.replace(/<[^>]+>/g, '')], { type: 'text/plain' }),
+        }),
+      ])
+    } catch {
+      // fallback: 일부 브라우저에서 ClipboardItem 미지원 시
+      const plain = generateHTML().replace(/<[^>]+>/g, '')
+      await navigator.clipboard.writeText(plain)
+    }
     setCopied(true)
     setTimeout(() => setCopied(false), 2000)
   }
