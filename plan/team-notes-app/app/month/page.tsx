@@ -1142,13 +1142,11 @@ export default function MonthPage() {
                             task.is_completed ? 'line-through text-gray-500' : ''
                           }`}
                         >
+                          {task.is_event && (
+                            <span className="text-indigo-500 font-bold mr-1">[EVENT]</span>
+                          )}
                           {task.title}
                         </h3>
-                        {task.is_event && (
-                          <span className="shrink-0 text-[10px] font-bold px-1.5 py-0.5 rounded bg-indigo-100 text-indigo-600 leading-none mt-1">
-                            event
-                          </span>
-                        )}
                         {/* 담당자 아이콘 */}
                         {task.assignee?.trim() && (
                           <div className="flex items-center gap-0.5 shrink-0 mt-0.5">
