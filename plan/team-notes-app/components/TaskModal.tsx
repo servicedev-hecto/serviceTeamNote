@@ -18,6 +18,7 @@ export interface TaskModalSubmitPayload {
   status: string
   dev_type: string
   is_event: boolean
+  has_page: boolean
   jira_ticket_id: string
   jira_ticket_url: string
   jira_title: string | null
@@ -67,6 +68,7 @@ export default function TaskModal({
   const [status, setStatus] = useState('시작 전')
   const [devType, setDevType] = useState('')
   const [isEvent, setIsEvent] = useState(false)
+  const [hasPage, setHasPage] = useState(false)
   const [jiraTicketId, setJiraTicketId] = useState('')
   const [jiraTicketUrl, setJiraTicketUrl] = useState('')
   const [jiraTitle, setJiraTitle] = useState<string | null>(null)
@@ -104,6 +106,7 @@ export default function TaskModal({
       setStatus(task.status ?? '시작 전')
       setDevType(task.dev_type ?? '')
       setIsEvent((task as Task & { is_event?: boolean }).is_event ?? false)
+      setHasPage((task as Task & { has_page?: boolean }).has_page ?? false)
       setJiraTicketId(task.jira_ticket_id ?? '')
       setJiraTicketUrl(task.jira_ticket_url ?? '')
       setJiraTitle(task.jira_title ?? null)
@@ -118,6 +121,7 @@ export default function TaskModal({
       setStatus('시작 전')
       setDevType('')
       setIsEvent(false)
+      setHasPage(false)
       setJiraTicketId('')
       setJiraTicketUrl('')
       setJiraTitle(null)
@@ -196,6 +200,7 @@ export default function TaskModal({
         status,
         dev_type: devType,
         is_event: isEvent,
+        has_page: isEvent ? hasPage : false,
         jira_ticket_id: jiraTicketId.trim(),
         jira_ticket_url: jiraTicketUrl.trim(),
         jira_title: hasJira ? jiraTitle : null,
@@ -409,17 +414,38 @@ export default function TaskModal({
               )}
             </div>
 
-            <div className="flex items-center gap-3">
-              <input
-                type="checkbox"
-                id="is_event"
-                checked={isEvent}
-                onChange={(e) => setIsEvent(e.target.checked)}
-                className="w-4 h-4 rounded border-gray-300 text-orange-500 focus:ring-orange-500"
-              />
-              <label htmlFor="is_event" className="text-sm font-medium text-gray-700 cursor-pointer">
-                이벤트 일정 <span className="text-xs text-gray-400 font-normal">(주간보고 이벤트 섹션에 포함)</span>
-              </label>
+            <div className="space-y-2">
+              <div className="flex items-center gap-3">
+                <input
+                  type="checkbox"
+                  id="is_event"
+                  checked={isEvent}
+                  onChange={(e) => {
+                    setIsEvent(e.target.checked)
+                    if (!e.target.checked) setHasPage(false)
+                  }}
+                  className="w-4 h-4 rounded border-gray-300 text-orange-500 focus:ring-orange-500"
+                />
+                <label htmlFor="is_event" className="text-sm font-medium text-gray-700 cursor-pointer">
+                  이벤트 일정 <span className="text-xs text-gray-400 font-normal">(주간보고 이벤트 섹션에 포함)</span>
+                </label>
+              </div>
+              {isEvent && (
+                <div className="pl-7">
+                  <button
+                    type="button"
+                    onClick={() => setHasPage((prev) => !prev)}
+                    className={`px-4 py-2 text-sm font-medium rounded-md border transition-colors ${
+                      hasPage
+                        ? 'bg-blue-500 text-white border-blue-500'
+                        : 'bg-white text-gray-600 border-gray-200 hover:border-gray-400'
+                    }`}
+                  >
+                    페이지 있음
+                  </button>
+                  <span className="ml-2 text-xs text-gray-400">주간보고 페이지 유무 ○</span>
+                </div>
+              )}
             </div>
 
             <div>

@@ -499,6 +499,7 @@ export default function MonthPage() {
     status: string
     dev_type: string
     is_event: boolean
+    has_page: boolean
     jira_ticket_id: string
     jira_ticket_url: string
     jira_title: string | null
@@ -522,6 +523,7 @@ export default function MonthPage() {
         status: payload.status || '시작 전',
         dev_type: payload.dev_type || null,
         is_event: payload.is_event,
+        has_page: payload.has_page,
         jira_ticket_id: payload.jira_ticket_id || null,
         jira_ticket_url: payload.jira_ticket_url || null,
         jira_title: jiraLinked ? payload.jira_title : null,
@@ -543,6 +545,7 @@ export default function MonthPage() {
           status: payload.status || '시작 전',
           dev_type: payload.dev_type || null,
           is_event: payload.is_event,
+        has_page: payload.has_page,
           jira_ticket_id: payload.jira_ticket_id || null,
           jira_ticket_url: payload.jira_ticket_url || null,
           jira_title: jiraLinked ? payload.jira_title : null,

@@ -118,7 +118,7 @@ export default function WeeklyReportModal({ weekAnchor, thisWeekTasks, nickname,
         <td style="${tdCenterStyle}">${i + 1}</td>
         <td style="${tdStyle}">${t.title}</td>
         <td style="${tdCenterStyle}">${formatDateFull(t.date)}</td>
-        <td style="${tdCenterStyle}">${t.dev_type?.includes('퍼블') ? '○' : ''}</td>
+        <td style="${tdCenterStyle}">${(t as Task & { has_page?: boolean }).has_page ? '○' : ''}</td>
         <td style="${tdCenterStyle}">${t.dev_type?.includes('개발') ? '○' : ''}</td>
       </tr>`
     ).join('')
@@ -305,7 +305,7 @@ ${eventTasks.length === 0
                       <td className="border border-gray-300 px-3 py-2">{t.title}</td>
                       <td className="border border-gray-300 px-3 py-2 text-center">{formatDateFull(t.date)}</td>
                       <td className="border border-gray-300 px-3 py-2 text-center">
-                        {t.dev_type?.includes('퍼블') ? '○' : ''}
+                        {(t as Task & { has_page?: boolean }).has_page ? '○' : ''}
                       </td>
                       <td className="border border-gray-300 px-3 py-2 text-center">
                         {t.dev_type?.includes('개발') ? '○' : ''}
