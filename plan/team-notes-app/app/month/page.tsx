@@ -101,6 +101,7 @@ export default function MonthPage() {
 
   const [tasks, setTasks] = useState<Task[]>([])
   const [authorByUserId, setAuthorByUserId] = useState<Record<string, string>>({})
+  const [avatarByNickname, setAvatarByNickname] = useState<Record<string, string>>({})
   const [taskLoadError, setTaskLoadError] = useState<string | null>(null)
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null)
   const [taskModalOpen, setTaskModalOpen] = useState(false)
@@ -212,10 +213,15 @@ export default function MonthPage() {
     const creatorIds = [...new Set(rows.map((t) => t.created_by))]
     let nickMap: Record<string, string> = {}
     if (creatorIds.length > 0) {
-      const { data: profs } = await supabase.from('profiles').select('user_id, nickname').in('user_id', creatorIds)
+      const { data: profs } = await supabase.from('profiles').select('user_id, nickname, avatar_url').in('user_id', creatorIds)
       nickMap = Object.fromEntries(
-        (profs || []).map((p: { user_id: string; nickname: string }) => [p.user_id, p.nickname])
+        (profs || []).map((p: { user_id: string; nickname: string; avatar_url: string | null }) => [p.user_id, p.nickname])
       )
+      const avatarMap: Record<string, string> = {}
+      ;(profs || []).forEach((p: { user_id: string; nickname: string; avatar_url: string | null }) => {
+        if (p.nickname && p.avatar_url) avatarMap[p.nickname] = p.avatar_url
+      })
+      setAvatarByNickname(avatarMap)
     }
     setAuthorByUserId(nickMap)
     setTasks(rows)
@@ -1147,17 +1153,29 @@ export default function MonthPage() {
                           )}
                           {task.title}
                         </h3>
-                        {/* 담당자 아이콘 */}
+                        {/* 담당자 아이콘 (겹치기) */}
                         {task.assignee?.trim() && (
-                          <div className="flex items-center gap-0.5 shrink-0 mt-0.5">
+                          <div className="flex items-center shrink-0 mt-0.5">
                             {task.assignee.split(',').map((name) => name.trim()).filter(Boolean).map((name, i) => (
-                              <span
-                                key={i}
-                                title={name}
-                                className="w-6 h-6 rounded-full bg-gray-200 text-gray-700 text-[11px] font-bold flex items-center justify-center shrink-0"
-                              >
-                                {name[0]}
-                              </span>
+                              avatarByNickname[name] ? (
+                                <img
+                                  key={i}
+                                  src={avatarByNickname[name]}
+                                  alt={name}
+                                  title={name}
+                                  style={{ zIndex: i }}
+                                  className="w-6 h-6 rounded-full object-cover border-2 border-white shrink-0 -ml-1.5 first:ml-0"
+                                />
+                              ) : (
+                                <span
+                                  key={i}
+                                  title={name}
+                                  style={{ zIndex: i }}
+                                  className="w-6 h-6 rounded-full bg-gray-200 text-gray-700 text-[11px] font-bold flex items-center justify-center shrink-0 border-2 border-white -ml-1.5 first:ml-0"
+                                >
+                                  {name[0]}
+                                </span>
+                              )
                             ))}
                           </div>
                         )}
