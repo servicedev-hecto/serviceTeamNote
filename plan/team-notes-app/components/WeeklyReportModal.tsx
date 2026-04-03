@@ -101,28 +101,28 @@ export default function WeeklyReportModal({ weekAnchor, thisWeekTasks, nickname,
     const thisWeekRows = thisWeekFiltered.map((t) => {
       const g = t.is_completed
       return `<tr>
-        <td style="${td('', g)}">${t.title}</td>
-        <td style="${td('text-align:center;', g)}">${formatDateMD(t.date)}</td>
-        <td style="${td('text-align:center;', g)}">${t.assignee || ''}</td>
+        <td style="${td('width:70%;', g)}">${t.title}</td>
+        <td style="${td('width:10%;text-align:center;', g)}">${formatDateMD(t.date)}</td>
+        <td style="${td('width:20%;text-align:center;', g)}">${t.assignee || ''}</td>
       </tr>`
     }).join('')
 
     const nextWeekRows = nextWeekTasks.map((t) => {
       const g = t.is_completed
       return `<tr>
-        <td style="${td('', g)}">${t.title}</td>
-        <td style="${td('text-align:center;', g)}">${t.assignee || ''}</td>
+        <td style="${td('width:80%;', g)}">${t.title}</td>
+        <td style="${td('width:20%;text-align:center;', g)}">${t.assignee || ''}</td>
       </tr>`
     }).join('')
 
     const eventRows = eventTasks.map((t, i) => {
       const g = t.is_completed
       return `<tr>
-        <td style="${td('text-align:center;', g)}">${i + 1}</td>
-        <td style="${td('', g)}">${t.title}</td>
-        <td style="${td('text-align:center;', g)}">${formatDateFull(t.date)}</td>
-        <td style="${td('text-align:center;', g)}">${(t as Task & { has_page?: boolean }).has_page ? '○' : ''}</td>
-        <td style="${td('text-align:center;', g)}">${t.dev_type?.includes('개발') ? '○' : ''}</td>
+        <td style="${td('width:5%;text-align:center;', g)}">${i + 1}</td>
+        <td style="${td('width:65%;', g)}">${t.title}</td>
+        <td style="${td('width:10%;text-align:center;', g)}">${formatDateFull(t.date)}</td>
+        <td style="${td('width:10%;text-align:center;', g)}">${(t as Task & { has_page?: boolean }).has_page ? '○' : ''}</td>
+        <td style="${td('width:10%;text-align:center;', g)}">${t.dev_type?.includes('개발') ? '○' : ''}</td>
       </tr>`
     }).join('')
 
@@ -134,26 +134,26 @@ export default function WeeklyReportModal({ weekAnchor, thisWeekTasks, nickname,
 ${thisWeekFiltered.length === 0
   ? '<p>- 없음</p>'
   : `<table style="${tableStyle}"><thead><tr>
-      <th style="${thStyle}text-align:left;">내용</th>
-      <th style="${thStyle}">배포(예정)일</th>
-      <th style="${thStyle}">담당자</th>
+      <th style="${thStyle}width:70%;text-align:left;">내용</th>
+      <th style="${thStyle}width:10%;">배포(예정)일</th>
+      <th style="${thStyle}width:20%;">담당자</th>
     </tr></thead><tbody>${thisWeekRows}</tbody></table>`}
 <p><b>[차주업무]</b></p>
 ${nextWeekTasks.length === 0
   ? '<p>- 없음</p>'
   : `<table style="${tableStyle}"><thead><tr>
-      <th style="${thStyle}text-align:left;">내용</th>
-      <th style="${thStyle}">담당자</th>
+      <th style="${thStyle}width:80%;text-align:left;">내용</th>
+      <th style="${thStyle}width:20%;">담당자</th>
     </tr></thead><tbody>${nextWeekRows}</tbody></table>`}
 <p><b>[이벤트]</b>&nbsp; 회색 : 배포완료</p>
 ${eventTasks.length === 0
   ? '<p>- 없음</p>'
   : `<table style="${tableStyle}"><thead><tr>
-      <th style="${thStyle}">No</th>
-      <th style="${thStyle}text-align:left;">이벤트명</th>
-      <th style="${thStyle}">개시일</th>
-      <th style="${thStyle}">페이지 유무</th>
-      <th style="${thStyle}">개발 필요 여부</th>
+      <th style="${thStyle}width:5%;">No</th>
+      <th style="${thStyle}width:65%;text-align:left;">이벤트명</th>
+      <th style="${thStyle}width:10%;">개시일</th>
+      <th style="${thStyle}width:10%;">페이지 유무</th>
+      <th style="${thStyle}width:10%;">개발 필요 여부</th>
     </tr></thead><tbody>${eventRows}</tbody></table>`}
 <p>이상입니다.</p>`
   }
