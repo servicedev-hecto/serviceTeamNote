@@ -26,6 +26,13 @@ export default function LoginPage() {
   const router = useRouter()
   const supabase = createClient()
 
+  // 이미 로그인된 경우 /month로 리디렉트
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (user) router.replace('/month')
+    })
+  }, [])
+
   // URL 해시 또는 쿼리 파라미터에서 Supabase 에러 감지
   useEffect(() => {
     if (typeof window === 'undefined') return
