@@ -116,17 +116,17 @@ create policy "인증된 사용자는 작업 생성 가능"
   to authenticated
   with check (auth.uid() = created_by);
 
--- 본인이 작성한 작업만 수정 가능
-create policy "본인만 작업 수정 가능"
+-- 모든 인증된 사용자가 작업 수정 가능
+create policy "인증된 사용자는 작업 수정 가능"
   on public.tasks for update
   to authenticated
-  using (auth.uid() = created_by);
+  using (true);
 
--- 본인이 작성한 작업만 삭제 가능
-create policy "본인만 작업 삭제 가능"
+-- 모든 인증된 사용자가 작업 삭제 가능
+create policy "인증된 사용자는 작업 삭제 가능"
   on public.tasks for delete
   to authenticated
-  using (auth.uid() = created_by);
+  using (true);
 
 -- ============================================
 -- task_comments 정책

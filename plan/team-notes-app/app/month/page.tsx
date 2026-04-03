@@ -1111,7 +1111,6 @@ export default function MonthPage() {
 
               {dayTasks.map((task) => {
                 const isSel = task.id === selectedTaskId
-                const isOwner = user?.id === task.created_by
                 return (
                   <div
                     key={task.id}
@@ -1134,14 +1133,13 @@ export default function MonthPage() {
                         <input
                           type="checkbox"
                           checked={task.is_completed}
-                          disabled={!isOwner}
                           onChange={(e) => {
                             e.stopPropagation()
                             toggleTaskComplete(task)
                           }}
                           onClick={(e) => e.stopPropagation()}
-                          className="mt-1 rounded border-gray-300 text-orange-500 focus:ring-orange-500 disabled:opacity-40"
-                          title={isOwner ? '완료' : '작성자만 변경 가능'}
+                          className="mt-1 rounded border-gray-300 text-orange-500 focus:ring-orange-500"
+                          title="완료"
                         />
                         <h3
                           className={`text-base font-semibold text-gray-900 break-words ${
@@ -1180,8 +1178,7 @@ export default function MonthPage() {
                           </div>
                         )}
                       </div>
-                      {isOwner && (
-                        <div className="flex items-center gap-1 shrink-0" onClick={(e) => e.stopPropagation()}>
+                      <div className="flex items-center gap-1 shrink-0" onClick={(e) => e.stopPropagation()}>
                           <button
                             type="button"
                             onClick={() => openEditModal(task)}
@@ -1203,7 +1200,6 @@ export default function MonthPage() {
                             </svg>
                           </button>
                         </div>
-                      )}
                     </div>
 
                     {task.content && <p className="text-sm text-gray-600 mb-3 whitespace-pre-wrap pl-7">{task.content}</p>}
