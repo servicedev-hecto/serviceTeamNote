@@ -97,11 +97,11 @@ export default function TaskModal({
       const reg = registerDayKey(task)
       const fromTitle = parseDeployDateFromTitle(task.title)
       if (fromTitle && fromTitle === task.date) {
-        setDate(task.date)
+        setDate(task.date ?? '')
       } else if (reg && task.date === reg) {
         setDate('')
       } else {
-        setDate(task.date)
+        setDate(task.date ?? '')
       }
       setSelectedAssignees(
         (task.assignee ?? '').split(',').map((s) => s.trim()).filter(Boolean)

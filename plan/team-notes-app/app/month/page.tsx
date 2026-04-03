@@ -521,7 +521,7 @@ export default function MonthPage() {
   const handleModalSubmit = async (payload: {
     title: string
     content: string
-    date: string
+    date: string | null
     registered_date: string | null
     assignee: string
     status: string
@@ -1044,7 +1044,7 @@ export default function MonthPage() {
                               key={t.id}
                               className={`text-[10px] leading-snug line-clamp-2 break-words ${
                                 isSel ? 'text-white/95' : 'text-gray-600'
-                              } ${t.is_completed ? 'line-through opacity-70' : ''}`}
+                              } ${t.date && t.date < formatDateKey(new Date()) ? 'line-through opacity-70' : ''}`}
                             >
                               {t.is_jira_linked && <span className="mr-0.5">🔗</span>}
                               {t.title}
