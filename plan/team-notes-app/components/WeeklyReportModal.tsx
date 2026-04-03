@@ -91,37 +91,40 @@ export default function WeeklyReportModal({ weekAnchor, thisWeekTasks, nickname,
   }, [])
 
   const thStyle = 'background:#4472C4;color:white;border:1px solid #ccc;padding:6px 10px;text-align:center;font-size:12px;white-space:nowrap;'
-  const tdStyle = 'border:1px solid #ccc;padding:6px 10px;font-size:12px;'
-  const tdCenterStyle = 'border:1px solid #ccc;padding:6px 10px;font-size:12px;text-align:center;'
-  const grayRowStyle = 'background:#d0d0d0;color:#777;'
 
   const generateHTML = (): string => {
-    const tableStyle = 'border-collapse:collapse;width:100%;margin-bottom:16px;'
+    const tableStyle = 'border-collapse:collapse;width:1000px;margin-bottom:16px;'
 
-    const thisWeekRows = thisWeekFiltered.map((t) =>
-      `<tr style="${t.is_completed ? grayRowStyle : ''}">
-        <td style="${tdStyle}">${t.title}</td>
-        <td style="${tdCenterStyle}">${formatDateMD(t.date)}</td>
-        <td style="${tdCenterStyle}">${t.assignee || ''}</td>
-      </tr>`
-    ).join('')
+    const td = (extra = '', gray = false) =>
+      `border:1px solid #ccc;padding:6px 10px;font-size:12px;${extra}${gray ? 'background:#d0d0d0;color:#777;' : ''}`
 
-    const nextWeekRows = nextWeekTasks.map((t) =>
-      `<tr style="${t.is_completed ? grayRowStyle : ''}">
-        <td style="${tdStyle}">${t.title}</td>
-        <td style="${tdCenterStyle}">${t.assignee || ''}</td>
+    const thisWeekRows = thisWeekFiltered.map((t) => {
+      const g = t.is_completed
+      return `<tr>
+        <td style="${td('', g)}">${t.title}</td>
+        <td style="${td('text-align:center;', g)}">${formatDateMD(t.date)}</td>
+        <td style="${td('text-align:center;', g)}">${t.assignee || ''}</td>
       </tr>`
-    ).join('')
+    }).join('')
 
-    const eventRows = eventTasks.map((t, i) =>
-      `<tr style="${t.is_completed ? grayRowStyle : ''}">
-        <td style="${tdCenterStyle}">${i + 1}</td>
-        <td style="${tdStyle}">${t.title}</td>
-        <td style="${tdCenterStyle}">${formatDateFull(t.date)}</td>
-        <td style="${tdCenterStyle}">${(t as Task & { has_page?: boolean }).has_page ? '○' : ''}</td>
-        <td style="${tdCenterStyle}">${t.dev_type?.includes('개발') ? '○' : ''}</td>
+    const nextWeekRows = nextWeekTasks.map((t) => {
+      const g = t.is_completed
+      return `<tr>
+        <td style="${td('', g)}">${t.title}</td>
+        <td style="${td('text-align:center;', g)}">${t.assignee || ''}</td>
       </tr>`
-    ).join('')
+    }).join('')
+
+    const eventRows = eventTasks.map((t, i) => {
+      const g = t.is_completed
+      return `<tr>
+        <td style="${td('text-align:center;', g)}">${i + 1}</td>
+        <td style="${td('', g)}">${t.title}</td>
+        <td style="${td('text-align:center;', g)}">${formatDateFull(t.date)}</td>
+        <td style="${td('text-align:center;', g)}">${(t as Task & { has_page?: boolean }).has_page ? '○' : ''}</td>
+        <td style="${td('text-align:center;', g)}">${t.dev_type?.includes('개발') ? '○' : ''}</td>
+      </tr>`
+    }).join('')
 
     return `
 <p>안녕하세요 실장님<br>${nickname}입니다.</p>
@@ -230,7 +233,7 @@ ${eventTasks.length === 0
             {thisWeekFiltered.length === 0 ? (
               <p className="text-gray-400">- 없음</p>
             ) : (
-              <table className="w-full border-collapse text-xs">
+              <table className="w-full border-collapse text-xs" style={{ minWidth: '600px' }}>
                 <thead>
                   <tr className="bg-[#4472C4] text-white">
                     <th className="border border-gray-300 px-3 py-2 text-left font-semibold">내용</th>
@@ -260,7 +263,7 @@ ${eventTasks.length === 0
             {nextWeekTasks.length === 0 ? (
               <p className="text-gray-400">- 없음</p>
             ) : (
-              <table className="w-full border-collapse text-xs">
+              <table className="w-full border-collapse text-xs" style={{ minWidth: '600px' }}>
                 <thead>
                   <tr className="bg-[#4472C4] text-white">
                     <th className="border border-gray-300 px-3 py-2 text-left font-semibold">내용</th>
@@ -288,7 +291,7 @@ ${eventTasks.length === 0
             {eventTasks.length === 0 ? (
               <p className="text-gray-400">- 없음</p>
             ) : (
-              <table className="w-full border-collapse text-xs">
+              <table className="w-full border-collapse text-xs" style={{ minWidth: '600px' }}>
                 <thead>
                   <tr className="bg-[#4472C4] text-white">
                     <th className="border border-gray-300 px-3 py-2 text-center font-semibold w-8">No</th>
