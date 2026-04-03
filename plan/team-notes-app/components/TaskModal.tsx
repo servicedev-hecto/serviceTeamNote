@@ -77,6 +77,8 @@ export default function TaskModal({
   const [jiraPriority, setJiraPriority] = useState<string | null>(null)
   const [jiraAssignee, setJiraAssignee] = useState<string | null>(null)
 
+  const [registeredDate, setRegisteredDate] = useState('')
+
   const [jiraLookupLoading, setJiraLookupLoading] = useState(false)
   const [jiraLookupHint, setJiraLookupHint] = useState('')
 
@@ -114,6 +116,7 @@ export default function TaskModal({
       setJiraStatus(task.jira_status ?? null)
       setJiraPriority(task.jira_priority ?? null)
       setJiraAssignee(task.jira_assignee ?? null)
+      setRegisteredDate(registerDayKey(task))
     } else {
       setTitle('')
       setContent('')
@@ -129,6 +132,7 @@ export default function TaskModal({
       setJiraStatus(null)
       setJiraPriority(null)
       setJiraAssignee(null)
+      setRegisteredDate('')
     }
   }, [open, mode, task, defaultDate])
 
@@ -188,7 +192,9 @@ export default function TaskModal({
         content: content.trim(),
         date: deployDate,
         registered_date:
-          mode === 'create' ? (registerCalendarDate.trim() || defaultDate) : null,
+          mode === 'create'
+            ? (registerCalendarDate.trim() || defaultDate)
+            : (registeredDate.trim() || null),
         assignee: selectedAssignees.join(', '),
         status,
         dev_type: devType,
@@ -312,13 +318,16 @@ export default function TaskModal({
             )}
 
             {mode === 'edit' && task && (
-              <div className="rounded-md bg-gray-50 border border-gray-100 px-4 py-2.5">
-                <p className="text-xs font-medium text-gray-500 mb-0.5">등록일 (캘린더 선택)</p>
-                <p className="text-sm text-gray-800 font-medium">{displayRegisteredDate(task)}</p>
-                <p className="text-xs text-gray-500 mt-1">
-                  {task.registered_date
-                    ? '등록 시 캘린더에서 선택한 날짜입니다.'
-                    : '예전 데이터는 등록 시각이 있던 시점의 날짜로 표시됩니다.'}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">등록일</label>
+                <input
+                  type="date"
+                  value={registeredDate}
+                  onChange={(e) => setRegisteredDate(e.target.value)}
+                  className={inputBase}
+                />
+                <p className="mt-1 text-xs text-gray-500">
+                  캘린더에서 일정이 시작되는 날짜입니다. 진행 중 일정은 등록일~배포일 사이에 표시됩니다.
                 </p>
               </div>
             )}

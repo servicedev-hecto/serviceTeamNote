@@ -568,6 +568,7 @@ export default function MonthPage() {
           title: payload.title,
           content: payload.content || null,
           date: payload.date || null,
+          registered_date: payload.registered_date || null,
           assignee: payload.assignee || null,
           status: payload.status || '시작전',
           dev_type: payload.dev_type || null,
