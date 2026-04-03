@@ -54,9 +54,6 @@ function groupTasksByDate(tasks: Task[], rangeStart?: string, rangeEnd?: string)
 
   for (const t of tasks) {
     if (t.date) {
-      // 배포일이 오늘 이전이면 미노출
-      if (t.date < today) continue
-
       // 등록일 ~ 배포일 매일 노출 (range 내에서만)
       if (t.registered_date && rangeStart && rangeEnd) {
         const spreadStart = t.registered_date > rangeStart ? t.registered_date : rangeStart
@@ -187,15 +184,23 @@ export default function MonthPage() {
       .order('date', { ascending: true })
       .order('created_at', { ascending: true })
 
-    // 2) 배포일이 기간 이후이고 등록일이 기간 내 또는 이전인 태스크 (기간에 걸치는 경우)
+    // 2) 배포일이 기간 이후 — 등록일이 기간에 걸치는 태스크
     const { data: data2 } = await supabase
       .from('tasks')
       .select('*')
       .gt('date', end)
       .lte('registered_date', end)
 
-    // 3) 배포일 없음 + 등록일이 기간 내인 태스크
+    // 3) 배포일이 기간 이전 — 등록일이 기간 내인 태스크 (배포 완료, 줄긋기용)
     const { data: data3 } = await supabase
+      .from('tasks')
+      .select('*')
+      .lt('date', start)
+      .gte('registered_date', start)
+      .lte('registered_date', end)
+
+    // 4) 배포일 없음 + 등록일이 기간 내인 태스크
+    const { data: data4 } = await supabase
       .from('tasks')
       .select('*')
       .is('date', null)
@@ -203,7 +208,7 @@ export default function MonthPage() {
       .lte('registered_date', end)
 
     const seen = new Set<string>()
-    const merged = [...(data1 || []), ...(data2 || []), ...(data3 || [])].filter((t) => {
+    const merged = [...(data1 || []), ...(data2 || []), ...(data3 || []), ...(data4 || [])].filter((t) => {
       if (seen.has(t.id)) return false
       seen.add(t.id)
       return true
@@ -1136,9 +1141,9 @@ export default function MonthPage() {
                     {/* 상단: 제목 + 담당자 아이콘 + 수정/삭제 */}
                     <div className="flex items-start justify-between gap-2 mb-2">
                       <div className="flex items-start gap-2 min-w-0 flex-1">
-                        <h3 className="text-base font-semibold text-gray-900 break-words">
+                        <h3 className={`text-base font-semibold break-words ${task.date && task.date < formatDateKey(new Date()) ? 'line-through text-gray-400' : 'text-gray-900'}`}>
                           {task.is_event && (
-                            <span className="text-[#aaa] font-bold mr-1">[EVENT]</span>
+                            <span className="font-bold mr-1">[EVENT]</span>
                           )}
                           {task.title}
                         </h3>
