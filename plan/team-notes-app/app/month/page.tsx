@@ -1164,6 +1164,7 @@ export default function MonthPage() {
                     role="button"
                     tabIndex={0}
                     onClick={() => setSelectedTaskId(task.id)}
+                    onDoubleClick={() => openEditModal(task)}
                     onKeyDown={(e) => {
                       if (e.key === 'Enter' || e.key === ' ') {
                         e.preventDefault()
