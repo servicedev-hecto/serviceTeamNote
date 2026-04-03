@@ -8,10 +8,11 @@ export interface Task {
   created_by: string
   title: string
   content: string | null
-  date: string
-  /** 캘린더에서「일정 추가」할 때 선택했던 날짜 (없으면 예전 행은 created_at 날짜로 표시) */
+  /** 배포일 (선택 — null이면 등록일에만 노출) */
+  date: string | null
+  /** 등록일: 이슈 등록 시 캘린더에서 선택한 날짜 */
   registered_date: string | null
-  is_completed: boolean
+  /** 상태: 시작전 | 개발중 | 개발완료 */
   status: string | null
   dev_type: string | null
   assignee: string | null

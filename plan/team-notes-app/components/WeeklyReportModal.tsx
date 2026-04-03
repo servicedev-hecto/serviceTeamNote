@@ -61,26 +61,65 @@ export default function WeeklyReportModal({ weekAnchor, thisWeekTasks, nickname,
   const eventRangeEnd = new Date(weekStart)
   eventRangeEnd.setDate(eventRangeEnd.getDate() + 42) // 6주
 
-  // 금주 태스크: 배포일이 이번 주, 일상 제외
+  const weekStartKey = formatKey(weekStart)
+  const weekEndKey = formatKey(weekEnd)
+  const today = formatKey(new Date())
+
+  // 금주 태스크: 이번 주에 걸치는 태스크, 일상 제외
   const thisWeekFiltered = thisWeekTasks
-    .filter((t) => t.date >= formatKey(weekStart) && t.date <= formatKey(weekEnd) && t.dev_type !== '일상')
-    .sort((a, b) => a.date.localeCompare(b.date))
+    .filter((t) => {
+      if (t.dev_type === '일상') return false
+      if (t.date) {
+        // 등록일 <= 이번 주 끝 AND 배포일 >= 이번 주 시작
+        const reg = t.registered_date ?? t.date
+        return reg <= weekEndKey && t.date >= weekStartKey
+      } else {
+        // 배포일 없음: 등록일이 이번 주인 것만
+        return !!t.registered_date && t.registered_date >= weekStartKey && t.registered_date <= weekEndKey
+      }
+    })
+    .sort((a, b) => (a.date ?? a.registered_date ?? '').localeCompare(b.date ?? b.registered_date ?? ''))
 
   useEffect(() => {
     const fetchData = async () => {
-      const { data: nw } = await supabase
+      const nwStartKey = formatKey(nextWeekStart)
+      const nwEndKey = formatKey(nextWeekEnd)
+
+      // 차주: 배포일이 차주에 걸치는 태스크
+      const { data: nw1 } = await supabase
         .from('tasks')
         .select('*')
-        .gte('date', formatKey(nextWeekStart))
-        .lte('date', formatKey(nextWeekEnd))
+        .gte('date', nwStartKey)
+        .lte('registered_date', nwEndKey)
         .neq('dev_type', '일상')
-        .order('date', { ascending: true })
-      setNextWeekTasks((nw as Task[]) || [])
 
+      // 차주: 배포일 없음 + 등록일이 차주인 태스크
+      const { data: nw2 } = await supabase
+        .from('tasks')
+        .select('*')
+        .is('date', null)
+        .gte('registered_date', nwStartKey)
+        .lte('registered_date', nwEndKey)
+        .neq('dev_type', '일상')
+
+      const seen = new Set<string>()
+      const nwMerged = [...(nw1 as Task[] || []), ...(nw2 as Task[] || [])].filter((t) => {
+        if (seen.has(t.id)) return false
+        seen.add(t.id)
+        // 배포일 있는 경우 차주 범위에 실제로 걸치는지 확인
+        if (t.date) {
+          const reg = t.registered_date ?? t.date
+          return reg <= nwEndKey && t.date >= nwStartKey
+        }
+        return true
+      }).sort((a, b) => (a.date ?? a.registered_date ?? '').localeCompare(b.date ?? b.registered_date ?? ''))
+      setNextWeekTasks(nwMerged)
+
+      // 이벤트: 배포일(개시일)이 이번 주 시작 이후 ~ 6주 이내
       const { data: ev } = await supabase
         .from('tasks')
         .select('*')
-        .gt('date', formatKey(weekEnd))
+        .gte('date', formatKey(weekStart))
         .lte('date', formatKey(eventRangeEnd))
         .eq('is_event', true)
         .order('date', { ascending: true })
@@ -99,16 +138,16 @@ export default function WeeklyReportModal({ weekAnchor, thisWeekTasks, nickname,
       `border:1px solid #ccc;padding:6px 10px;font-size:12px;${extra}${gray ? 'background:#d0d0d0;color:#777;' : ''}`
 
     const thisWeekRows = thisWeekFiltered.map((t) => {
-      const g = t.is_completed
+      const g = !!t.date && t.date < today
       return `<tr>
         <td style="${td('width:70%;', g)}">${t.title}</td>
-        <td style="${td('width:10%;text-align:center;', g)}">${formatDateMD(t.date)}</td>
+        <td style="${td('width:10%;text-align:center;', g)}">${t.date ? formatDateMD(t.date) : ''}</td>
         <td style="${td('width:20%;text-align:center;', g)}">${t.assignee || ''}</td>
       </tr>`
     }).join('')
 
     const nextWeekRows = nextWeekTasks.map((t) => {
-      const g = t.is_completed
+      const g = !!t.date && t.date < today
       return `<tr>
         <td style="${td('width:80%;', g)}">${t.title}</td>
         <td style="${td('width:20%;text-align:center;', g)}">${t.assignee || ''}</td>
@@ -116,7 +155,7 @@ export default function WeeklyReportModal({ weekAnchor, thisWeekTasks, nickname,
     }).join('')
 
     const eventRows = eventTasks.map((t, i) => {
-      const g = t.is_completed
+      const g = !!t.date && t.date < today
       return `<tr>
         <td style="${td('width:5%;text-align:center;', g)}">${i + 1}</td>
         <td style="${td('width:65%;', g)}">${t.title}</td>
@@ -245,10 +284,10 @@ ${eventTasks.length === 0
                   {thisWeekFiltered.map((t) => (
                     <tr
                       key={t.id}
-                      className={t.is_completed ? 'bg-gray-200 text-gray-500' : 'bg-white'}
+                      className={t.date && t.date < today ? 'bg-gray-200 text-gray-500' : 'bg-white'}
                     >
                       <td className="border border-gray-300 px-3 py-2">{t.title}</td>
-                      <td className="border border-gray-300 px-3 py-2 text-center">{formatDateMD(t.date)}</td>
+                      <td className="border border-gray-300 px-3 py-2 text-center">{t.date ? formatDateMD(t.date) : ''}</td>
                       <td className="border border-gray-300 px-3 py-2 text-center">{t.assignee || ''}</td>
                     </tr>
                   ))}
@@ -272,7 +311,7 @@ ${eventTasks.length === 0
                 </thead>
                 <tbody>
                   {nextWeekTasks.map((t) => (
-                    <tr key={t.id} className={t.is_completed ? 'bg-gray-200 text-gray-500' : 'bg-white'}>
+                    <tr key={t.id} className={t.date && t.date < today ? 'bg-gray-200 text-gray-500' : 'bg-white'}>
                       <td className="border border-gray-300 px-3 py-2">{t.title}</td>
                       <td className="border border-gray-300 px-3 py-2 text-center">{t.assignee || ''}</td>
                     </tr>
@@ -303,7 +342,7 @@ ${eventTasks.length === 0
                 </thead>
                 <tbody>
                   {eventTasks.map((t, i) => (
-                    <tr key={t.id} className={t.is_completed ? 'bg-gray-200 text-gray-500' : 'bg-white'}>
+                    <tr key={t.id} className={t.date && t.date < today ? 'bg-gray-200 text-gray-500' : 'bg-white'}>
                       <td className="border border-gray-300 px-3 py-2 text-center">{i + 1}</td>
                       <td className="border border-gray-300 px-3 py-2">{t.title}</td>
                       <td className="border border-gray-300 px-3 py-2 text-center">{formatDateFull(t.date)}</td>

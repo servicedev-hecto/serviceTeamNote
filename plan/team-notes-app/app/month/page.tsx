@@ -45,6 +45,7 @@ function weekDatesFromAnchor(anchor: Date): Date[] {
 
 function groupTasksByDate(tasks: Task[], rangeStart?: string, rangeEnd?: string): Record<string, Task[]> {
   const map: Record<string, Task[]> = {}
+  const today = formatDateKey(new Date())
 
   const addToDate = (key: string, task: Task) => {
     if (!map[key]) map[key] = []
@@ -52,20 +53,28 @@ function groupTasksByDate(tasks: Task[], rangeStart?: string, rangeEnd?: string)
   }
 
   for (const t of tasks) {
-    const isInProgress = t.status === '시작 전' || t.status === '개발중'
+    if (t.date) {
+      // 배포일이 오늘 이전이면 미노출
+      if (t.date < today) continue
 
-    if (isInProgress && t.registered_date && rangeStart && rangeEnd) {
-      // 등록일~배포일 사이 모든 날짜에 표시 (visible range 내에서만)
-      const spreadStart = t.registered_date > rangeStart ? t.registered_date : rangeStart
-      const spreadEnd = t.date < rangeEnd ? t.date : rangeEnd
-      const cur = new Date(spreadStart)
-      const endDate = new Date(spreadEnd)
-      while (cur <= endDate) {
-        addToDate(formatDateKey(cur), t)
-        cur.setDate(cur.getDate() + 1)
+      // 등록일 ~ 배포일 매일 노출 (range 내에서만)
+      if (t.registered_date && rangeStart && rangeEnd) {
+        const spreadStart = t.registered_date > rangeStart ? t.registered_date : rangeStart
+        const spreadEnd = t.date < rangeEnd ? t.date : rangeEnd
+        const cur = new Date(spreadStart)
+        const endDate = new Date(spreadEnd)
+        while (cur <= endDate) {
+          addToDate(formatDateKey(cur), t)
+          cur.setDate(cur.getDate() + 1)
+        }
+      } else {
+        addToDate(t.date, t)
       }
     } else {
-      addToDate(t.date, t)
+      // 배포일 없음: 등록일에만 노출
+      if (t.registered_date) {
+        addToDate(t.registered_date, t)
+      }
     }
   }
 
@@ -169,7 +178,7 @@ export default function MonthPage() {
       if (sk < start) start = sk
       if (sk > end) end = sk
     }
-    // 1) 배포일이 이번 기간 내인 태스크
+    // 1) 배포일이 기간 내인 태스크
     const { data: data1, error } = await supabase
       .from('tasks')
       .select('*')
@@ -178,17 +187,23 @@ export default function MonthPage() {
       .order('date', { ascending: true })
       .order('created_at', { ascending: true })
 
-    // 2) 진행 중(시작 전/개발중)이면서 등록일이 이번 기간 내이고 배포일이 기간 이후인 태스크
+    // 2) 배포일이 기간 이후이고 등록일이 기간 내 또는 이전인 태스크 (기간에 걸치는 경우)
     const { data: data2 } = await supabase
       .from('tasks')
       .select('*')
       .gt('date', end)
       .lte('registered_date', end)
+
+    // 3) 배포일 없음 + 등록일이 기간 내인 태스크
+    const { data: data3 } = await supabase
+      .from('tasks')
+      .select('*')
+      .is('date', null)
       .gte('registered_date', start)
-      .neq('status', '완료')
+      .lte('registered_date', end)
 
     const seen = new Set<string>()
-    const merged = [...(data1 || []), ...(data2 || [])].filter((t) => {
+    const merged = [...(data1 || []), ...(data2 || []), ...(data3 || [])].filter((t) => {
       if (seen.has(t.id)) return false
       seen.add(t.id)
       return true
@@ -518,15 +533,15 @@ export default function MonthPage() {
     const jiraLinked = !!(payload.jira_ticket_id || payload.jira_ticket_url)
 
     if (taskModalMode === 'create') {
-      const regDate = payload.registered_date?.trim() || payload.date
+      const regDate = payload.registered_date?.trim() || null
       const { error } = await supabase.from('tasks').insert({
         created_by: user.id,
         title: payload.title,
         content: payload.content || null,
-        date: payload.date,
+        date: payload.date || null,
         registered_date: regDate,
         assignee: payload.assignee || null,
-        status: payload.status || '시작 전',
+        status: payload.status || '시작전',
         dev_type: payload.dev_type || null,
         is_event: payload.is_event,
         has_page: payload.has_page,
@@ -537,7 +552,6 @@ export default function MonthPage() {
         jira_priority: jiraLinked ? payload.jira_priority : null,
         jira_assignee: jiraLinked ? payload.jira_assignee : null,
         is_jira_linked: jiraLinked,
-        is_completed: false,
       })
       if (error) throw new Error(error.message)
     } else if (editingTask) {
@@ -546,12 +560,12 @@ export default function MonthPage() {
         .update({
           title: payload.title,
           content: payload.content || null,
-          date: payload.date,
+          date: payload.date || null,
           assignee: payload.assignee || null,
-          status: payload.status || '시작 전',
+          status: payload.status || '시작전',
           dev_type: payload.dev_type || null,
           is_event: payload.is_event,
-        has_page: payload.has_page,
+          has_page: payload.has_page,
           jira_ticket_id: payload.jira_ticket_id || null,
           jira_ticket_url: payload.jira_ticket_url || null,
           jira_title: jiraLinked ? payload.jira_title : null,
@@ -565,8 +579,9 @@ export default function MonthPage() {
     }
 
     await loadTasks()
-    if (payload.date !== formatDateKey(selectedDate)) {
-      const [y, mo, da] = payload.date.split('-').map(Number)
+    const navDate = payload.date || payload.registered_date
+    if (navDate && navDate !== formatDateKey(selectedDate)) {
+      const [y, mo, da] = navDate.split('-').map(Number)
       setSelectedDate(new Date(y, mo - 1, da))
       setCurrentMonth(new Date(y, mo - 1, 1))
     }
@@ -580,15 +595,6 @@ export default function MonthPage() {
       return
     }
     if (selectedTaskId === task.id) setSelectedTaskId(null)
-    await loadTasks()
-  }
-
-  const toggleTaskComplete = async (task: Task) => {
-    const { error } = await supabase.from('tasks').update({ is_completed: !task.is_completed }).eq('id', task.id)
-    if (error) {
-      alert(error.message)
-      return
-    }
     await loadTasks()
   }
 
@@ -1125,27 +1131,12 @@ export default function MonthPage() {
                     }}
                     className={`border rounded-lg p-4 transition-shadow text-left cursor-pointer ${
                       isSel ? 'border-orange-500 ring-2 ring-orange-200 shadow-md' : 'border-gray-200 hover:shadow-md'
-                    } ${task.is_completed ? 'opacity-70' : ''}`}
+                    }`}
                   >
-                    {/* 상단: 체크박스 + 제목 + 담당자 아이콘 + 수정/삭제 */}
+                    {/* 상단: 제목 + 담당자 아이콘 + 수정/삭제 */}
                     <div className="flex items-start justify-between gap-2 mb-2">
                       <div className="flex items-start gap-2 min-w-0 flex-1">
-                        <input
-                          type="checkbox"
-                          checked={task.is_completed}
-                          onChange={(e) => {
-                            e.stopPropagation()
-                            toggleTaskComplete(task)
-                          }}
-                          onClick={(e) => e.stopPropagation()}
-                          className="mt-1 rounded border-gray-300 text-orange-500 focus:ring-orange-500"
-                          title="완료"
-                        />
-                        <h3
-                          className={`text-base font-semibold text-gray-900 break-words ${
-                            task.is_completed ? 'line-through text-gray-500' : ''
-                          }`}
-                        >
+                        <h3 className="text-base font-semibold text-gray-900 break-words">
                           {task.is_event && (
                             <span className="text-[#aaa] font-bold mr-1">[EVENT]</span>
                           )}
@@ -1202,14 +1193,14 @@ export default function MonthPage() {
                         </div>
                     </div>
 
-                    {task.content && <p className="text-sm text-gray-600 mb-3 whitespace-pre-wrap pl-7">{task.content}</p>}
+                    {task.content && <p className="text-sm text-gray-600 mb-3 whitespace-pre-wrap">{task.content}</p>}
 
                     {/* 하단: 배지 + 날짜 우측 정렬 */}
-                    <div className="flex items-end justify-between gap-2 pl-7" style={{ marginTop: 10 }}>
+                    <div className="flex items-end justify-between gap-2" style={{ marginTop: 10 }}>
                       <div className="flex flex-wrap items-center gap-1.5">
                         {task.status && (
                           <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
-                            task.status === '완료' ? 'bg-green-100 text-green-700'
+                            task.status === '개발완료' ? 'bg-green-100 text-green-700'
                             : task.status === '개발중' ? 'bg-blue-100 text-blue-700'
                             : 'bg-gray-100 text-gray-600'
                           }`}>
@@ -1229,8 +1220,7 @@ export default function MonthPage() {
                       <div className="flex flex-wrap items-center justify-end gap-x-2 gap-y-0.5 text-xs text-gray-400 shrink-0">
                         <span>작성: {authorByUserId[task.created_by]?.trim() || '—'}</span>
                         <span>|</span>
-                        <span>배포 {task.date}</span>
-                        <span>|</span>
+                        {task.date && <><span>배포 {task.date}</span><span>|</span></>}
                         <span>등록 {task.registered_date ?? formatDateKey(new Date(task.created_at))}</span>
                         {task.is_jira_linked && (
                           <>

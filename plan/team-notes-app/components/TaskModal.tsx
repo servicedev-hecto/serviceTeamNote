@@ -11,7 +11,8 @@ const DEV_TYPES = ['퍼블', '개발', '퍼블+개발', '일상'] as const
 export interface TaskModalSubmitPayload {
   title: string
   content: string
-  date: string
+  /** 배포일 (null 가능) */
+  date: string | null
   /** 신규만: 캘린더에서 일정 추가 시 선택했던 날짜 */
   registered_date: string | null
   assignee: string
@@ -65,7 +66,7 @@ export default function TaskModal({
   const [content, setContent] = useState('')
   const [date, setDate] = useState(defaultDate)
   const [selectedAssignees, setSelectedAssignees] = useState<string[]>([])
-  const [status, setStatus] = useState('시작 전')
+  const [status, setStatus] = useState('시작전')
   const [devType, setDevType] = useState('')
   const [isEvent, setIsEvent] = useState(false)
   const [hasPage, setHasPage] = useState(false)
@@ -103,7 +104,7 @@ export default function TaskModal({
       setSelectedAssignees(
         (task.assignee ?? '').split(',').map((s) => s.trim()).filter(Boolean)
       )
-      setStatus(task.status ?? '시작 전')
+      setStatus(task.status ?? '시작전')
       setDevType(task.dev_type ?? '')
       setIsEvent((task as Task & { is_event?: boolean }).is_event ?? false)
       setHasPage((task as Task & { has_page?: boolean }).has_page ?? false)
@@ -177,15 +178,7 @@ export default function TaskModal({
       return
     }
     const parsedDeploy = parseDeployDateFromTitle(t)
-    const regFallback = registerCalendarDate.trim() || defaultDate.trim()
-    const editFallback = task?.registered_date?.trim() || task?.date?.trim() || ''
-    const deployDate =
-      parsedDeploy ??
-      (date.trim() || (mode === 'create' ? regFallback : editFallback))
-    if (!deployDate) {
-      setError('배포 일자를 정할 수 없습니다. 수정 모드에서 날짜를 한 번 선택해주세요.')
-      return
-    }
+    const deployDate = parsedDeploy ?? (date.trim() || null)
     setSaving(true)
     setError('')
     try {
@@ -332,28 +325,26 @@ export default function TaskModal({
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                배포 일자 <span className="text-gray-400 font-normal">(선택)</span>
+                배포일 <span className="text-gray-400 font-normal">(선택 — 없으면 등록일에만 노출)</span>
               </label>
               <input type="date" value={date} onChange={(e) => setDate(e.target.value)} className={inputBase} />
               <p className="mt-1 text-xs text-gray-500">
-                캘린더에 쓰이는 <strong>배포·일정 일자</strong>입니다.{' '}
-                <strong className="text-gray-700">비워 두면 등록일과 같은 날</strong>로 저장됩니다. 우선순위: 제목{' '}
-                <code className="text-[11px] bg-gray-100 px-0.5 rounded">[YY-MM-DD]</code> → 아래 입력칸 → (비었을 때){' '}
-                등록일. Jira 조회 시에는 제목 날짜 → 마감일 → 등록일 순으로 채웁니다.
+                비워두면 배포일 없이 등록일에만 노출됩니다. 제목에{' '}
+                <code className="text-[11px] bg-gray-100 px-1 rounded">[YY-MM-DD]</code>가 있으면 자동으로 채워집니다.
               </p>
             </div>
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1.5">진행 상태</label>
               <div className="flex gap-2">
-                {(['시작 전', '개발중', '완료'] as const).map((s) => (
+                {(['시작전', '개발중', '개발완료'] as const).map((s) => (
                   <button
                     key={s}
                     type="button"
                     onClick={() => setStatus(s)}
                     className={`flex-1 py-2 text-sm font-medium rounded-md border transition-colors ${
                       status === s
-                        ? s === '완료' ? 'bg-green-500 text-white border-green-500'
+                        ? s === '개발완료' ? 'bg-green-500 text-white border-green-500'
                           : s === '개발중' ? 'bg-blue-500 text-white border-blue-500'
                           : 'bg-gray-500 text-white border-gray-500'
                         : 'bg-white text-gray-600 border-gray-200 hover:border-gray-400'
