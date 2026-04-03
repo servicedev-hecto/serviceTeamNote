@@ -159,7 +159,7 @@ export default function WeeklyReportModal({ weekAnchor, thisWeekTasks, nickname,
       return `<tr>
         <td style="${td('width:5%;text-align:center;', g)}">${i + 1}</td>
         <td style="${td('width:65%;', g)}">${t.title}</td>
-        <td style="${td('width:10%;text-align:center;', g)}">${formatDateFull(t.date)}</td>
+        <td style="${td('width:10%;text-align:center;', g)}">${t.date ? formatDateFull(t.date) : ''}</td>
         <td style="${td('width:10%;text-align:center;', g)}">${(t as Task & { has_page?: boolean }).has_page ? '○' : ''}</td>
         <td style="${td('width:10%;text-align:center;', g)}">${t.dev_type?.includes('개발') ? '○' : ''}</td>
       </tr>`
@@ -345,7 +345,7 @@ ${eventTasks.length === 0
                     <tr key={t.id} className={t.date && t.date < today ? 'bg-gray-200 text-gray-500' : 'bg-white'}>
                       <td className="border border-gray-300 px-3 py-2 text-center">{i + 1}</td>
                       <td className="border border-gray-300 px-3 py-2">{t.title}</td>
-                      <td className="border border-gray-300 px-3 py-2 text-center">{formatDateFull(t.date)}</td>
+                      <td className="border border-gray-300 px-3 py-2 text-center">{t.date ? formatDateFull(t.date) : ''}</td>
                       <td className="border border-gray-300 px-3 py-2 text-center">
                         {(t as Task & { has_page?: boolean }).has_page ? '○' : ''}
                       </td>
