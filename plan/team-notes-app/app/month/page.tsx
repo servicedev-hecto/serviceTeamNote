@@ -1283,7 +1283,7 @@ export default function MonthPage() {
                             onClick={(e) => e.stopPropagation()}
                             className="text-sm text-blue-600 hover:underline inline-flex items-center gap-1"
                           >
-                            🔗 티켓 링크
+                            🔗 {task.jira_ticket_id || task.jira_ticket_url.split('/').pop()}
                           </a>
                         ) : (
                           <span className="text-sm text-blue-600">🔗 {task.jira_ticket_id}</span>

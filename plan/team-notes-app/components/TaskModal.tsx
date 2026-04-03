@@ -151,7 +151,8 @@ export default function TaskModal({
       const res = await fetch(`/api/jira/issue?key=${encodeURIComponent(raw)}`)
       const data = await res.json()
       if (!res.ok) {
-        setError(data.error || '티켓 조회에 실패했습니다')
+        setJiraTicketUrl(`https://hh.hectoqnm.kr/browse/${raw}`)
+        setError(data.error || '티켓 조회에 실패했습니다. URL만 자동으로 채워졌습니다.')
         return
       }
       setJiraTicketId(data.key)
@@ -168,7 +169,8 @@ export default function TaskModal({
       else if (data.duedate) setDate(data.duedate)
       setJiraLookupHint('Jira에서 일정 정보를 가져왔습니다. 필요하면 아래를 수정한 뒤 저장하세요.')
     } catch {
-      setError('티켓 조회 중 오류가 발생했습니다')
+      setJiraTicketUrl(`https://hh.hectoqnm.kr/browse/${raw}`)
+      setError('티켓 조회 중 오류가 발생했습니다. URL만 자동으로 채워졌습니다.')
     } finally {
       setJiraLookupLoading(false)
     }
