@@ -116,6 +116,8 @@ export default function MonthPage() {
   /** 일정 추가 모달을 열 때 캘린더에 선택되어 있던 날짜 (= 등록일) */
   const [registerCalendarDateKey, setRegisterCalendarDateKey] = useState('')
 
+  const [filterAssignee, setFilterAssignee] = useState<string | null>(null)
+
   const [comments, setComments] = useState<CommentRow[]>([])
   const [commentText, setCommentText] = useState('')
   const [commentSubmitting, setCommentSubmitting] = useState(false)
@@ -666,8 +668,11 @@ export default function MonthPage() {
   ]
 
   const selectedKey = formatDateKey(selectedDate)
-  const dayTasks = tasksByDate[selectedKey] || []
-  const selectedTask = dayTasks.find((t) => t.id === selectedTaskId) ?? null
+  const dayTasksAll = tasksByDate[selectedKey] || []
+  const dayTasks = filterAssignee
+    ? dayTasksAll.filter((t) => t.assignee?.split(',').map((s) => s.trim()).includes(filterAssignee))
+    : dayTasksAll
+  const selectedTask = dayTasksAll.find((t) => t.id === selectedTaskId) ?? null
 
   const weekDates = weekDatesFromAnchor(weekAnchor)
   const weekStartDate = weekDates[0]!
@@ -1098,6 +1103,36 @@ export default function MonthPage() {
                 {taskLoadError}
               </div>
             )}
+
+            {/* 담당자 필터 */}
+            <div className="flex items-center gap-2 mb-4 flex-wrap">
+              <button
+                type="button"
+                onClick={() => setFilterAssignee(null)}
+                className={`px-3 py-1 text-xs font-medium rounded-full border transition-colors ${
+                  filterAssignee === null ? 'bg-gray-800 text-white border-gray-800' : 'bg-white text-gray-500 border-gray-200 hover:border-gray-400'
+                }`}
+              >
+                전체
+              </button>
+              {['고진석', '김아름', '조소영', '김영은'].map((name) => (
+                <button
+                  key={name}
+                  type="button"
+                  onClick={() => setFilterAssignee(filterAssignee === name ? null : name)}
+                  className={`flex items-center gap-1.5 pl-1 pr-3 py-1 text-xs font-medium rounded-full border transition-colors ${
+                    filterAssignee === name ? 'bg-gray-800 text-white border-gray-800' : 'bg-white text-gray-500 border-gray-200 hover:border-gray-400'
+                  }`}
+                >
+                  {avatarByNickname[name] ? (
+                    <img src={avatarByNickname[name]} alt={name} className="w-5 h-5 rounded-full object-cover" />
+                  ) : (
+                    <span className="w-5 h-5 rounded-full bg-gray-200 text-gray-600 text-[10px] font-bold flex items-center justify-center">{name[0]}</span>
+                  )}
+                  {name}
+                </button>
+              ))}
+            </div>
 
             <div className="space-y-4 mb-8">
               {holidays[selectedKey] && (
