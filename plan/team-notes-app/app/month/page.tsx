@@ -11,6 +11,29 @@ import AccountsModal from '@/components/AccountsModal'
 import WeeklyReportModal from '@/components/WeeklyReportModal'
 import type { Task } from '@/types/database.types'
 
+function notionRegisterPayload(task: Task) {
+  return {
+    id: task.id,
+    title: task.title,
+    content: task.content,
+    date: task.date,
+    registered_date: task.registered_date,
+    assignee: task.assignee,
+    status: task.status,
+    dev_type: task.dev_type,
+    jira_ticket_id: task.jira_ticket_id,
+    jira_ticket_url: task.jira_ticket_url,
+    is_event: task.is_event,
+    has_page: task.has_page,
+  }
+}
+
+/** @lobehub/icons-static-svg — unpkg 실패 시 npmmirror로 폴백 */
+const NOTION_ICON_CDN_UNPKG =
+  'https://unpkg.com/@lobehub/icons-static-svg@latest/icons/notion.svg'
+const NOTION_ICON_CDN_NPM_MIRROR =
+  'https://registry.npmmirror.com/@lobehub/icons-static-svg/latest/files/icons/notion.svg'
+
 function getMonthRange(date: Date): { start: string; end: string } {
   const y = date.getFullYear()
   const m = date.getMonth()
@@ -117,6 +140,14 @@ export default function MonthPage() {
   const [registerCalendarDateKey, setRegisterCalendarDateKey] = useState('')
 
   const [filterAssignee, setFilterAssignee] = useState<string | null>(null)
+  const [notionLoadingIds, setNotionLoadingIds] = useState<Set<string>>(new Set())
+  /** JIRA URL 충돌 시 기존 Notion 페이지 미리보기 */
+  const [notionJiraConflict, setNotionJiraConflict] = useState<{
+    task: Task
+    pageId: string
+    notionUrl: string
+    preview: Record<string, string>
+  } | null>(null)
 
   const [comments, setComments] = useState<CommentRow[]>([])
   const [commentText, setCommentText] = useState('')
@@ -124,6 +155,23 @@ export default function MonthPage() {
 
   const router = useRouter()
   const supabase = createClient()
+
+  const persistNotionRegistered = useCallback(
+    async (taskId: string) => {
+      const now = new Date().toISOString()
+      const { error } = await supabase
+        .from('tasks')
+        .update({ notion_registered_at: now })
+        .eq('id', taskId)
+      if (error) return
+      setTasks((prev) =>
+        prev.map((t) =>
+          t.id === taskId ? { ...t, notion_registered_at: now } : t
+        )
+      )
+    },
+    [supabase]
+  )
 
   const minSwipeDistance = 50
 
@@ -606,6 +654,72 @@ export default function MonthPage() {
     await loadTasks()
   }
 
+  const handleNotionRegister = async (task: Task) => {
+    setNotionLoadingIds((prev) => new Set(prev).add(task.id))
+    try {
+      const res = await fetch('/api/notion/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(notionRegisterPayload(task)),
+      })
+      const data = await res.json()
+      if (data.duplicate) {
+        await persistNotionRegistered(task.id)
+        alert('이미 Notion에 등록된 항목입니다.')
+      } else if (data.conflictJira && data.pageId) {
+        setNotionJiraConflict({
+          task,
+          pageId: data.pageId as string,
+          notionUrl: (data.notionUrl as string) || '',
+          preview: (data.preview as Record<string, string>) || {},
+        })
+      } else if (data.success) {
+        await persistNotionRegistered(task.id)
+      } else {
+        alert(data.error || 'Notion 등록 중 오류가 발생했습니다.')
+      }
+    } catch {
+      alert('Notion 등록 중 오류가 발생했습니다.')
+    } finally {
+      setNotionLoadingIds((prev) => {
+        const next = new Set(prev)
+        next.delete(task.id)
+        return next
+      })
+    }
+  }
+
+  const handleNotionOverwriteConfirm = async () => {
+    if (!notionJiraConflict) return
+    const { task, pageId } = notionJiraConflict
+    setNotionJiraConflict(null)
+    setNotionLoadingIds((prev) => new Set(prev).add(task.id))
+    try {
+      const res = await fetch('/api/notion/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ...notionRegisterPayload(task),
+          overwritePageId: pageId,
+        }),
+      })
+      const data = await res.json()
+      if (data.success) {
+        await persistNotionRegistered(task.id)
+      } else {
+        alert(data.error || 'Notion 갱신 중 오류가 발생했습니다.')
+      }
+    } catch {
+      alert('Notion 갱신 중 오류가 발생했습니다.')
+    } finally {
+      setNotionLoadingIds((prev) => {
+        const next = new Set(prev)
+        next.delete(task.id)
+        return next
+      })
+    }
+  }
+
   const handlePostComment = async () => {
     if (!selectedTaskId || !user || !commentText.trim()) return
     setCommentSubmitting(true)
@@ -738,6 +852,69 @@ export default function MonthPage() {
         }}
         onSubmit={handleModalSubmit}
       />
+
+      {notionJiraConflict && (
+        <div
+          className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 backdrop-blur-sm px-4"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="notion-jira-conflict-title"
+          onClick={() => setNotionJiraConflict(null)}
+        >
+          <div
+            className="bg-white rounded-xl shadow-xl max-w-lg w-full max-h-[85vh] overflow-hidden flex flex-col border border-gray-200"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="px-5 py-4 border-b border-gray-100">
+              <h2 id="notion-jira-conflict-title" className="text-lg font-semibold text-gray-900">
+                같은 JIRA 티켓의 Notion 페이지가 있습니다
+              </h2>
+              <p className="text-sm text-gray-600 mt-1">
+                아래는 현재 Notion에 저장된 내용입니다. 덮어쓰면 이 페이지가 이번 일정 정보로 갱신됩니다.
+              </p>
+            </div>
+            <div className="px-5 py-3 overflow-y-auto flex-1 text-sm">
+              {notionJiraConflict.notionUrl ? (
+                <a
+                  href={notionJiraConflict.notionUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-orange-600 hover:underline break-all block mb-3"
+                >
+                  Notion에서 열기
+                </a>
+              ) : null}
+              <dl className="space-y-2">
+                {Object.entries(notionJiraConflict.preview).map(([key, value]) => (
+                  <div key={key}>
+                    <dt className="text-xs font-medium text-gray-500 uppercase tracking-wide">{key}</dt>
+                    <dd className="text-gray-900 whitespace-pre-wrap break-words mt-0.5">{value}</dd>
+                  </div>
+                ))}
+              </dl>
+              {Object.keys(notionJiraConflict.preview).length === 0 ? (
+                <p className="text-gray-500">표시할 속성이 없습니다.</p>
+              ) : null}
+            </div>
+            <div className="px-5 py-4 border-t border-gray-100 flex justify-end gap-2 bg-gray-50">
+              <button
+                type="button"
+                className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50"
+                onClick={() => setNotionJiraConflict(null)}
+              >
+                취소
+              </button>
+              <button
+                type="button"
+                className="px-4 py-2 text-sm font-medium text-white bg-orange-600 rounded-lg hover:bg-orange-700"
+                onClick={() => void handleNotionOverwriteConfirm()}
+              >
+                Notion 내용 덮어쓰기
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <div className="flex flex-col md:flex-row md:h-[calc(100vh-73px)]">
         <div className="w-full md:w-1/2 border-b md:border-b-0 md:border-r border-gray-200 p-4 md:p-8 overflow-y-auto">
@@ -1212,6 +1389,42 @@ export default function MonthPage() {
                         )}
                       </div>
                       <div className="flex items-center gap-1 shrink-0" onClick={(e) => e.stopPropagation()}>
+                          <button
+                            type="button"
+                            onClick={() => handleNotionRegister(task)}
+                            disabled={notionLoadingIds.has(task.id)}
+                            className={`p-1.5 rounded-md transition-colors ${
+                              task.notion_registered_at
+                                ? 'text-green-500 hover:bg-gray-50'
+                                : 'text-gray-400 hover:text-gray-700 hover:bg-gray-50'
+                            }`}
+                            title={task.notion_registered_at ? 'Notion 등록 완료' : 'Notion에 등록'}
+                          >
+                            {notionLoadingIds.has(task.id) ? (
+                              <svg className="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24">
+                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4l3-3-3-3v4a8 8 0 00-8 8h4z" />
+                              </svg>
+                            ) : task.notion_registered_at ? (
+                              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                              </svg>
+                            ) : (
+                              <img
+                                src={NOTION_ICON_CDN_UNPKG}
+                                alt=""
+                                width={20}
+                                height={20}
+                                className="w-5 h-5 object-contain opacity-80"
+                                onError={(e) => {
+                                  const el = e.currentTarget
+                                  if (!el.src.includes('npmmirror.com')) {
+                                    el.src = NOTION_ICON_CDN_NPM_MIRROR
+                                  }
+                                }}
+                              />
+                            )}
+                          </button>
                           <button
                             type="button"
                             onClick={() => openEditModal(task)}

@@ -25,6 +25,8 @@ export interface Task {
   is_jira_linked: boolean
   is_event: boolean
   has_page: boolean
+  /** Notion DB에 한 번 이상 반영된 시각 (체크 표시 유지용). DB 마이그레이션 전에는 응답에 없을 수 있음 */
+  notion_registered_at?: string | null
 }
 
 export type TaskInsert = Omit<Task, 'id' | 'created_at' | 'updated_at'> & {

@@ -337,6 +337,9 @@ alter table public.tasks add column if not exists is_event boolean default false
 -- 이벤트 페이지 유무 (주간보고 페이지 유무 ○ 표시용)
 alter table public.tasks add column if not exists has_page boolean default false;
 
+-- Notion 등록 여부(새로고침 후에도 체크 유지)
+alter table public.tasks add column if not exists notion_registered_at timestamp with time zone;
+
 -- ============================================
 -- Storage: profiles 버킷 정책
 -- Supabase 대시보드 → Storage에서 'profiles' 버킷을 Public으로 먼저 생성 후 실행
